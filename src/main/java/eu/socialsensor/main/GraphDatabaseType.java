@@ -20,7 +20,8 @@ public enum GraphDatabaseType
     TITAN_PERSISTIT("TitanEmbedded", "persistit", "tp"),
     ORIENT_DB("OrientDB", null, "orient"),
     NEO4J("Neo4j", null, "neo4j"),
-    SPARKSEE("Sparksee", null, "sparksee");
+    SPARKSEE("Sparksee", null, "sparksee"),
+    S2GRAPH("S2Graph", null, "s2graph");
 
     private final String backend;
     private final String api;

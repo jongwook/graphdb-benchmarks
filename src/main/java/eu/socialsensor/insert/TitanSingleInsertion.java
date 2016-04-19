@@ -29,7 +29,7 @@ public class TitanSingleInsertion extends InsertionBase<Vertex>
     @Override
     public Vertex getOrCreate(String value)
     {
-        Integer intValue = Integer.valueOf(value);
+        Integer intValue = Integer.valueOf(value) + 1;
         final Vertex v;
         if (titanGraph.query().has("nodeId", Compare.EQUAL, intValue).vertices().iterator().hasNext())
         {

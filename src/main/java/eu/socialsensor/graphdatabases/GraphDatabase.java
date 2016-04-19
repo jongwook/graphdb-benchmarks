@@ -121,7 +121,7 @@ public interface GraphDatabase<VertexIteratorType, EdgeIteratorType, VertexType,
      */
     public Set<Integer> getNeighborsIds(int nodeId);
 
-    /**
+     /**
      * @param nodeId
      * @return the node degree
      */

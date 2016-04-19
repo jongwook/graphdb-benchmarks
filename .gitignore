@@ -1,8 +1,15 @@
+.DS_Store
 target/*
 *.class
+*.iml
 /target
 /data
+/.idea
 /.project
 /.gitignore
 /.settings
 /.classpath
+/storage
+/results
+/data
+/metrics

@@ -1,9 +1,6 @@
 package eu.socialsensor.utils;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -12,19 +9,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.LineIterator;
+import com.typesafe.config.ConfigFactory;
+import eu.socialsensor.graphdatabases.*;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.util.MathArrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import eu.socialsensor.graphdatabases.GraphDatabase;
-import eu.socialsensor.graphdatabases.Neo4jGraphDatabase;
-import eu.socialsensor.graphdatabases.OrientGraphDatabase;
-import eu.socialsensor.graphdatabases.SparkseeGraphDatabase;
-import eu.socialsensor.graphdatabases.TitanGraphDatabase;
 import eu.socialsensor.main.BenchmarkConfiguration;
 import eu.socialsensor.main.BenchmarkingException;
 import eu.socialsensor.main.GraphDatabaseType;
@@ -65,26 +59,18 @@ public class Utils
         {
             throw new IllegalArgumentException("file object must be a readable file: " + file.getAbsolutePath());
         }
-        LineIterator it;
-        try
-        {
-            it = FileUtils.lineIterator(file, "UTF-8");
-        }
-        catch (IOException e)
-        {
-            throw new BenchmarkingException("Unable to read lines from file: " + file.getAbsolutePath(), e);
-        }
-        List<String> result = new LinkedList<String>();
-        try
-        {
-            while (it.hasNext())
-            {
-                result.add(it.nextLine());
-            }
-        }
-        finally
-        {
-            LineIterator.closeQuietly(it);
+        List<String> result = new LinkedList<>();
+
+        try (
+            FileInputStream fis = new FileInputStream(file);
+            BufferedInputStream bis = new BufferedInputStream(fis, 4096);
+            GZIPInputStream gzip = new GZIPInputStream(bis);
+            InputStreamReader isr = new InputStreamReader(gzip);
+            BufferedReader reader = new BufferedReader(isr)
+        ) {
+            reader.lines().forEach(result::add);
+        } catch (IOException e) {
+            throw new BenchmarkingException("Unable to read data from " + file);
         }
 
         return result;
@@ -141,7 +127,7 @@ public class Utils
         {
             for (Double insertionTime : insertionTimes)
             {
-                out.write(String.format("%d\n", String.valueOf(insertionTime)));
+                out.write(String.format("%s\n", String.valueOf(insertionTime)));
             }
         }
         catch (IOException e)
@@ -197,6 +183,10 @@ public class Utils
         else if (GraphDatabaseType.SPARKSEE == type)
         {
             graphDatabase = new SparkseeGraphDatabase(config, dbStorageDirectory);
+        }
+        else if (GraphDatabaseType.S2GRAPH == type)
+        {
+            graphDatabase = new S2GraphDatabase(ConfigFactory.load(), dbStorageDirectory);
         }
         else
         {

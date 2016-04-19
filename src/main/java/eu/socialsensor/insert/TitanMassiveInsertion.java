@@ -28,7 +28,7 @@ public class TitanMassiveInsertion extends InsertionBase<Vertex>
     @Override
     public Vertex getOrCreate(String value)
     {
-        Integer intVal = Integer.valueOf(value);
+        Integer intVal = Integer.valueOf(value) + 1;
         final long titanVertexId = TitanId.toVertexId(intVal);
         Vertex vertex = batchGraph.getVertex(titanVertexId);
         if (vertex == null)
