@@ -32,6 +32,7 @@ import org.neo4j.unsafe.batchinsert.BatchInserter;
 import org.neo4j.unsafe.batchinsert.BatchInserters;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Neo4j graph database implementation
@@ -130,14 +132,14 @@ public class Neo4jGraphDatabase extends GraphDatabaseBase<Iterator<Node>, Iterat
     }
 
     @Override
-    public void singleModeLoading(File dataPath, File resultsPath, int scenarioNumber)
+    public void singleModeLoading(Supplier<InputStream> dataPath, File resultsPath, int scenarioNumber)
     {
         Insertion neo4jSingleInsertion = new Neo4jSingleInsertion(this.neo4jGraph, resultsPath);
         neo4jSingleInsertion.createGraph(dataPath, scenarioNumber);
     }
 
     @Override
-    public void massiveModeLoading(File dataPath)
+    public void massiveModeLoading(Supplier<InputStream> dataPath)
     {
         Insertion neo4jMassiveInsertion = new Neo4jMassiveInsertion(this.inserter);
         neo4jMassiveInsertion.createGraph(dataPath, 0 /* scenarioNumber */);

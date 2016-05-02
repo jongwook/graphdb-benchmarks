@@ -1,9 +1,11 @@
 package eu.socialsensor.graphdatabases;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Represents a graph database
@@ -59,7 +61,7 @@ public interface GraphDatabase<VertexIteratorType, EdgeIteratorType, VertexType,
      * @param dataPath
      *            - dataset path
      */
-    public void massiveModeLoading(File dataPath);
+    public void massiveModeLoading(Supplier<InputStream> dataPath);
 
     /**
      * Inserts data in single mode
@@ -69,7 +71,7 @@ public interface GraphDatabase<VertexIteratorType, EdgeIteratorType, VertexType,
      * @param resultsPath
      * @param scenarioNumber
      */
-    public void singleModeLoading(File dataPath, File resultsPath, int scenarioNumber);
+    public void singleModeLoading(Supplier<InputStream> dataPath, File resultsPath, int scenarioNumber);
 
     /**
      * Creates a graph database and configures for bulk data insertion

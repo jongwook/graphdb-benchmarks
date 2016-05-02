@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
@@ -44,25 +45,23 @@ public class Utils
             {
                 throw new IllegalStateException("file " + intermediateFile.getAbsolutePath() + " does not exist");
             }
-            data.add(getListFromTextDoc(intermediateFile));
+            data.add(getListFromTextDoc(() -> {
+                try {
+                    return new FileInputStream(intermediateFile);
+                } catch (IOException e) {
+                    throw new RuntimeException("IOException while opening " + intermediateFile.getName(), e);
+                }
+            }));
         }
         return data;
     }
 
-    public static final List<String> readlines(File file)
+    public static final List<String> readlines(Supplier<InputStream> file)
     {
-        if (file == null || !file.exists())
-        {
-            throw new IllegalArgumentException("file object must not be null and must exist: " + file.getAbsolutePath());
-        }
-        if (!file.isFile() || !(file.isFile() && file.canRead()))
-        {
-            throw new IllegalArgumentException("file object must be a readable file: " + file.getAbsolutePath());
-        }
         List<String> result = new LinkedList<>();
 
         try (
-            FileInputStream fis = new FileInputStream(file);
+            InputStream fis = file.get();
             BufferedInputStream bis = new BufferedInputStream(fis, 4096);
             GZIPInputStream gzip = new GZIPInputStream(bis);
             InputStreamReader isr = new InputStreamReader(gzip);
@@ -72,7 +71,7 @@ public class Utils
         } catch (IOException e) {
             result.clear();
             try (
-                FileInputStream fis = new FileInputStream(file);
+                InputStream fis = file.get();
                 InputStreamReader isr = new InputStreamReader(fis);
                 BufferedReader reader = new BufferedReader(isr)
             ) {
@@ -98,7 +97,7 @@ public class Utils
         return result;
     }
 
-    public static final List<List<String>> readTabulatedLines(File file, int numberOfLinesToSkip)
+    public static final List<List<String>> readTabulatedLines(Supplier<InputStream> file, int numberOfLinesToSkip)
     {
         return parseTabulatedLines(readlines(file), numberOfLinesToSkip);
     }
@@ -145,7 +144,7 @@ public class Utils
         }
     }
 
-    public static List<Double> getListFromTextDoc(File file)
+    public static List<Double> getListFromTextDoc(Supplier<InputStream> file)
     {
         List<String> lines = readlines(file);
         List<Double> values = new ArrayList<Double>(lines.size());

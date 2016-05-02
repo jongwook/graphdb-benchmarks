@@ -1,8 +1,10 @@
 package eu.socialsensor.dataset;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * 
@@ -12,11 +14,11 @@ import java.util.Map;
 public class DatasetFactory
 {
     private static DatasetFactory theInstance = null;
-    private final Map<File, Dataset> datasetMap;
+    private final Map<Supplier<InputStream>, Dataset> datasetMap;
 
     private DatasetFactory()
     {
-        datasetMap = new HashMap<File, Dataset>();
+        datasetMap = new HashMap<>();
     }
 
     public static DatasetFactory getInstance()
@@ -28,7 +30,7 @@ public class DatasetFactory
         return theInstance;
     }
 
-    public Dataset getDataset(File datasetFile)
+    public Dataset getDataset(Supplier<InputStream> datasetFile)
     {
         if (!datasetMap.containsKey(datasetFile))
         {

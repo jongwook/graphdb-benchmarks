@@ -1,11 +1,13 @@
 package eu.socialsensor.dataset;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.apache.commons.math3.util.MathArrays;
 
@@ -20,7 +22,7 @@ public class Dataset implements Iterable<List<String>>
 {
     private final List<List<String>> data;
 
-    public Dataset(File datasetFile)
+    public Dataset(Supplier<InputStream> datasetFile)
     {
         data = Utils.readTabulatedLines(datasetFile, 4 /* numberOfLinesToSkip */);
     }

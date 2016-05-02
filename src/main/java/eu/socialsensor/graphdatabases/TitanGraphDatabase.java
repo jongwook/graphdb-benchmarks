@@ -2,6 +2,7 @@ package eu.socialsensor.graphdatabases;
 
 import java.io.File;
 import java.io.IOError;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.MapConfiguration;
@@ -258,14 +260,14 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<Vertex>, Iter
     }
 
     @Override
-    public void massiveModeLoading(File dataPath)
+    public void massiveModeLoading(Supplier<InputStream> dataPath)
     {
         Insertion titanMassiveInsertion = new TitanMassiveInsertion(this.batchGraph, type);
         titanMassiveInsertion.createGraph(dataPath, 0 /* scenarioNumber */);
     }
 
     @Override
-    public void singleModeLoading(File dataPath, File resultsPath, int scenarioNumber)
+    public void singleModeLoading(Supplier<InputStream> dataPath, File resultsPath, int scenarioNumber)
     {
         Insertion titanSingleInsertion = new TitanSingleInsertion(this.titanGraph, type, resultsPath);
         titanSingleInsertion.createGraph(dataPath, scenarioNumber);

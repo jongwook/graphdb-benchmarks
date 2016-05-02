@@ -1,6 +1,8 @@
 package eu.socialsensor.insert;
 
 import java.io.File;
+import java.io.InputStream;
+import java.util.function.Supplier;
 
 /**
  * Represents the insertion of data in each graph database
@@ -15,6 +17,6 @@ public interface Insertion
      * 
      * @param datasetDir
      */
-    public void createGraph(File dataset, int scenarioNumber);
+    public void createGraph(Supplier<InputStream> dataset, int scenarioNumber);
 
 }

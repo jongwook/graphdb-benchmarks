@@ -1,12 +1,13 @@
 package eu.socialsensor.main;
 
-import java.io.File;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.math3.util.CombinatoricsUtils;
@@ -69,7 +70,7 @@ public class BenchmarkConfiguration
         metricsReporters.add(GRAPHITE);
     }
 
-    private final File dataset;
+    private final Supplier<InputStream> dataset;
     private final List<BenchmarkType> benchmarkTypes;
     private final SortedSet<GraphDatabaseType> selectedDatabases;
     private final File resultsPath;
@@ -99,7 +100,7 @@ public class BenchmarkConfiguration
     private final Integer cacheValuesCount;
     private final Double cacheIncrementFactor;
     private final List<Integer> cacheValues;
-    private final File actualCommunities;
+    private final Supplier<InputStream> actualCommunities;
     private final boolean permuteBenchmarks;
     private final int scenarios;
     private final String dynamodbCredentialsFqClassName;
@@ -181,7 +182,7 @@ public class BenchmarkConfiguration
             throw new IllegalArgumentException("configuration must specify database-storage-directory");
         }
         dbStorageDirectory = new File(socialsensor.getString(DATABASE_STORAGE_DIRECTORY));
-        dataset = validateReadableFile(socialsensor.getString(DATASET), DATASET);
+        dataset = validateReadableFileStream(socialsensor.getString(DATASET), DATASET);
 
         // load the dataset
         DatasetFactory.getInstance().getDataset(dataset);
@@ -241,7 +242,7 @@ public class BenchmarkConfiguration
             {
                 throw new IllegalArgumentException("the CW benchmark requires a file with actual communities");
             }
-            actualCommunities = validateReadableFile(socialsensor.getString(ACTUAL_COMMUNITIES), ACTUAL_COMMUNITIES);
+            actualCommunities = validateReadableFileStream(socialsensor.getString(ACTUAL_COMMUNITIES), ACTUAL_COMMUNITIES);
 
             final boolean notGenerating = socialsensor.containsKey(CACHE_VALUES);
             if (notGenerating)
@@ -290,7 +291,7 @@ public class BenchmarkConfiguration
         }
     }
 
-    public File getDataset()
+    public Supplier<InputStream> getDataset()
     {
         return dataset;
     }
@@ -355,7 +356,7 @@ public class BenchmarkConfiguration
         return cacheValues;
     }
 
-    public File getActualCommunitiesFile()
+    public Supplier<InputStream> getActualCommunitiesStream()
     {
         return actualCommunities;
     }
@@ -380,11 +381,22 @@ public class BenchmarkConfiguration
         return scenarios;
     }
 
-    private static final File validateReadableFile(String fileName, String fileType)
+    private static Supplier<InputStream> validateReadableFileStream(String fileName, String fileType)
     {
         File file = new File(fileName);
         if (!file.exists())
         {
+            File file1 = new File(fileName + ".1");
+            File file2 = new File(fileName + ".2");
+            if (file1.exists() && file2.exists() && file1.isFile() && file2.isFile() && file1.canRead() && file2.canRead()) {
+                return () -> {
+                    try {
+                        return new SequenceInputStream(new FileInputStream(file1), new FileInputStream(file2));
+                    } catch (IOException e) {
+                        throw new RuntimeException("IOException while opening file " + fileName, e);
+                    }
+                };
+            }
             throw new IllegalArgumentException(String.format("the %s does not exist", fileType));
         }
 
@@ -392,7 +404,14 @@ public class BenchmarkConfiguration
         {
             throw new IllegalArgumentException(String.format("the %s must be a file that this user can read", fileType));
         }
-        return file;
+
+        return () -> {
+            try {
+                return new FileInputStream(file);
+            } catch (IOException e) {
+                throw new RuntimeException("IOException while opening file " + fileName, e);
+            }
+        };
     }
 
     public int getRandomNodes()

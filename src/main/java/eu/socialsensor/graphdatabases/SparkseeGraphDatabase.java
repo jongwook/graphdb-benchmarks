@@ -2,12 +2,14 @@ package eu.socialsensor.graphdatabases;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import com.sparsity.sparksee.algorithms.SinglePairShortestPathBFS;
 import com.sparsity.sparksee.gdb.AttributeKind;
@@ -150,14 +152,14 @@ public class SparkseeGraphDatabase extends GraphDatabaseBase<ObjectsIterator, Ob
     }
 
     @Override
-    public void massiveModeLoading(File dataPath)
+    public void massiveModeLoading(Supplier<InputStream> dataPath)
     {
         Insertion sparkseeMassiveInsertion = new SparkseeMassiveInsertion(session);
         sparkseeMassiveInsertion.createGraph(dataPath, 0 /* scenarioNumber */);
     }
 
     @Override
-    public void singleModeLoading(File dataPath, File resultsPath, int scenarioNumber)
+    public void singleModeLoading(Supplier<InputStream> dataPath, File resultsPath, int scenarioNumber)
     {
         Insertion sparkseeSingleInsertion = new SparkseeSingleInsertion(this.session, resultsPath);
         sparkseeSingleInsertion.createGraph(dataPath, scenarioNumber);

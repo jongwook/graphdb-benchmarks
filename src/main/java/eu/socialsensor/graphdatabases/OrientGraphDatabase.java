@@ -28,6 +28,7 @@ import eu.socialsensor.main.GraphDatabaseType;
 import eu.socialsensor.utils.Utils;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * OrientDB graph database implementation
@@ -82,14 +84,14 @@ public class OrientGraphDatabase extends GraphDatabaseBase<Iterator<Vertex>, Ite
     }
 
     @Override
-    public void massiveModeLoading(File dataPath)
+    public void massiveModeLoading(Supplier<InputStream> dataPath)
     {
         OrientMassiveInsertion orientMassiveInsertion = new OrientMassiveInsertion(this.graph.getRawGraph().getURL());
         orientMassiveInsertion.createGraph(dataPath, 0 /* scenarioNumber */);
     }
 
     @Override
-    public void singleModeLoading(File dataPath, File resultsPath, int scenarioNumber)
+    public void singleModeLoading(Supplier<InputStream> dataPath, File resultsPath, int scenarioNumber)
     {
         Insertion orientSingleInsertion = new OrientSingleInsertion(this.graph, resultsPath);
         orientSingleInsertion.createGraph(dataPath, scenarioNumber);

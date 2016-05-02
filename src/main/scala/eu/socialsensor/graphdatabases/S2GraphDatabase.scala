@@ -1,8 +1,9 @@
 package eu.socialsensor.graphdatabases
 
-import java.io.File
+import java.io.{InputStream, File}
 import java.util
 import java.util.concurrent.Executors
+import java.util.function.Supplier
 
 import com.typesafe.config.{Config, ConfigFactory}
 import eu.socialsensor.graphdatabases.S2GraphDatabase._
@@ -87,12 +88,12 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
 
 
   // main benchmark methods
-  override def singleModeLoading(dataPath: File, resultsPath: File, scenarioNumber: Int): Unit = {
+  override def singleModeLoading(dataPath: Supplier[InputStream], resultsPath: File, scenarioNumber: Int): Unit = {
     val s2graphSingleInsertion = new S2GraphSingleInsertion(this.s2, resultsPath)
     s2graphSingleInsertion.createGraph(dataPath, scenarioNumber)
   }
 
-  override def massiveModeLoading(dataPath: File): Unit = {
+  override def massiveModeLoading(dataPath: Supplier[InputStream]): Unit = {
     val s2graphMassiveInsertion = new S2GraphMassiveInsertion(this.s2)
     s2graphMassiveInsertion.createGraph(dataPath, 1)
   }

@@ -99,8 +99,7 @@ public class ClusteringBenchmark extends BenchmarkBase implements RequiresGraphD
         SortedMap<Integer, Double> timeMap = new TreeMap<Integer, Double>();
         for (int cacheSize : cacheValues)
         {
-            LOG.info("Graph Database: " + type.getShortname() + ", Dataset: " + bench.getDataset().getName()
-                + ", Cache Size: " + cacheSize);
+            LOG.info("Graph Database: " + type.getShortname() + ", Dataset: " + bench.getDataset() + ", Cache Size: " + cacheSize);
 
             Stopwatch watch = new Stopwatch();
             watch.start();
@@ -111,7 +110,7 @@ public class ClusteringBenchmark extends BenchmarkBase implements RequiresGraphD
             // evaluation with NMI
             Map<Integer, List<Integer>> predictedCommunities = graphDatabase.mapCommunities(louvainMethodCache.getN());
             Map<Integer, List<Integer>> actualCommunities = mapNodesToCommunities(Utils.readTabulatedLines(
-                bench.getActualCommunitiesFile(), 4 /* numberOfLinesToSkip */));
+                bench.getActualCommunitiesStream(), 4 /* numberOfLinesToSkip */));
             Metrics metrics = new Metrics();
             double NMI = metrics.normalizedMutualInformation(bench.getNodesCount(), actualCommunities,
                 predictedCommunities);

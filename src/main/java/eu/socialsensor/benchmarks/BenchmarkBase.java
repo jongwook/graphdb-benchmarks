@@ -41,8 +41,7 @@ public abstract class BenchmarkBase implements Benchmark
     {
         for (GraphDatabaseType type : bench.getSelectedDatabases())
         {
-            logger.info(String.format("creating %s database from %s dataset", type.getShortname(), bench.getDataset()
-                .getName()));
+            logger.info(String.format("creating %s database from %s dataset", type.getShortname(), bench.getDataset()));
             File dbpath = Utils.generateStorageDirectory(type, bench.getDbStorageDirectory());
             if (dbpath.exists())
             {
