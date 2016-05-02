@@ -102,6 +102,22 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
             }
         }
     }
+
+    @Override
+    public void findAllNeighborsOfNeighborsOfFirstFewNodes(int n) {
+        //get the iterator
+        Object tx = null;
+        if(GraphDatabaseType.NEO4J == type) { //TODO fix this
+            tx = ((Neo4jGraphDatabase) this).neo4jGraph.beginTx();
+        }
+        try {
+            throw new RuntimeException("Not Yet Implemented");
+        } finally {
+            if(GraphDatabaseType.NEO4J == type) {
+                ((Transaction) tx).finish();
+            }
+        }
+    }
     
     @Override
     public void findNodesOfAllEdges() {

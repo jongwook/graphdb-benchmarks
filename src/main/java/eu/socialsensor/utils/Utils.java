@@ -70,7 +70,16 @@ public class Utils
         ) {
             reader.lines().forEach(result::add);
         } catch (IOException e) {
-            throw new BenchmarkingException("Unable to read data from " + file);
+            result.clear();
+            try (
+                FileInputStream fis = new FileInputStream(file);
+                InputStreamReader isr = new InputStreamReader(fis);
+                BufferedReader reader = new BufferedReader(isr)
+            ) {
+                reader.lines().forEach(result::add);
+            } catch (IOException e2) {
+                throw new BenchmarkingException("Unable to read data from " + file);
+            }
         }
 
         return result;

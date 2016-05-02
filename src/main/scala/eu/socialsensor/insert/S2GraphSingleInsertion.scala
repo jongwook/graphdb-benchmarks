@@ -4,7 +4,7 @@ import java.io.File
 
 import eu.socialsensor.graphdatabases.S2GraphDatabase._
 import eu.socialsensor.main.GraphDatabaseType
-import org.apache.s2graph.core.types.{LabelWithDirection, InnerVal, VertexId}
+import org.apache.s2graph.core.types.{InnerValLikeWithTs, LabelWithDirection, InnerVal, VertexId}
 import org.apache.s2graph.core.{Edge, Graph, Vertex}
 
 import scala.concurrent.Await
@@ -20,8 +20,10 @@ class S2GraphSingleInsertion(graph: Graph, resultsPath: File) extends InsertionB
   }
 
   override protected def relateNodes(src: Vertex, dest: Vertex): Unit = {
+    val ts = System.currentTimeMillis()
     val edge = Edge(
-      src, dest, LabelWithDirection(labelId, 0), propsWithTs = Map()
+      src, dest, LabelWithDirection(labelId, 0),
+      propsWithTs = Map(0.toByte -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion))
     )
   }
 }
