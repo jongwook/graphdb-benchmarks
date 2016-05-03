@@ -36,7 +36,7 @@ public interface GraphDatabase<VertexIteratorType, EdgeIteratorType, VertexType,
     
     //benchmarks
     public void findAllNodeNeighbours();
-    public void findAllNeighborsOfNeighborsOfFirstFewNodes(int n);
+    public long findAllNeighboursOfNeighboursOfTheFirstFewNodes(int n);
     public void findNodesOfAllEdges();
 
     /**

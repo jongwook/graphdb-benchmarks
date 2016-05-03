@@ -104,19 +104,67 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
     }
 
     @Override
-    public void findAllNeighborsOfNeighborsOfFirstFewNodes(int n) {
+    public long findAllNeighboursOfNeighboursOfTheFirstFewNodes(int n) {
+        long total = 0;
+
         //get the iterator
         Object tx = null;
         if(GraphDatabaseType.NEO4J == type) { //TODO fix this
             tx = ((Neo4jGraphDatabase) this).neo4jGraph.beginTx();
         }
         try {
-            throw new RuntimeException("Not Yet Implemented");
+            VertexIteratorType vertexIterator =  this.getVertexIterator();
+            for (int cnt = 0; vertexIteratorHasNext(vertexIterator) && cnt < n; cnt++) {
+                VertexType vertex;
+                Timer.Context ctxt = nextVertexTimes.time();
+                try {
+                    vertex = nextVertex(vertexIterator);
+                } finally {
+                    ctxt.stop();
+                }
+
+                final EdgeIteratorType edgeNeighborIterator;
+                ctxt = getNeighborsOfVertexTimes.time();
+                try {
+                    edgeNeighborIterator = this.getNeighborsOfVertex(vertex);
+                } finally {
+                    ctxt.stop();
+                }
+                while(edgeIteratorHasNext(edgeNeighborIterator)) {
+                    EdgeType edge;
+                    ctxt = nextEdgeTimes.time();
+                    try {
+                        edge = nextEdge(edgeNeighborIterator);
+                    } finally {
+                        ctxt.stop();
+                    }
+
+                    VertexType other;
+                    ctxt = getOtherVertexFromEdgeTimes.time();
+                    try {
+                        other = getOtherVertexFromEdge(edge, vertex);
+                        EdgeIteratorType neighborOfNeighbor = this.getNeighborsOfVertex(other);
+                        while (edgeIteratorHasNext(neighborOfNeighbor)) {
+                            edge = nextEdge(neighborOfNeighbor);
+                            total++;
+                        }
+                    } finally {
+                        ctxt.stop();
+                    }
+                }
+                this.cleanupEdgeIterator(edgeNeighborIterator);
+            }
+            this.cleanupVertexIterator(vertexIterator);
+            if(this instanceof Neo4jGraphDatabase) {
+                ((Transaction) tx).success();
+            }
         } finally {
             if(GraphDatabaseType.NEO4J == type) {
                 ((Transaction) tx).finish();
             }
         }
+
+        return total;
     }
     
     @Override

@@ -224,14 +224,18 @@ public class BenchmarkConfiguration
 
         randomNodes = socialsensor.getInteger(RANDOM_NODES, new Integer(100));
 
-        if (this.benchmarkTypes.contains(BenchmarkType.CLUSTERING))
-        {
+        if (this.benchmarkTypes.contains(BenchmarkType.FIND_NEIGHBOURS_OF_NEIGHBOURS) || this.benchmarkTypes.contains(BenchmarkType.CLUSTERING)) {
             if (!socialsensor.containsKey(NODES_COUNT))
             {
-                throw new IllegalArgumentException("the CW benchmark requires nodes-count integer in config");
+                throw new IllegalArgumentException("the FIND_NEIGHBOURS_OF_NEIGHBOURS and CW benchmark requires nodes-count integer in config");
             }
             nodesCount = socialsensor.getInt(NODES_COUNT);
+        } else {
+            nodesCount = null;
+        }
 
+        if (this.benchmarkTypes.contains(BenchmarkType.CLUSTERING))
+        {
             if (!socialsensor.containsKey(RANDOMIZE_CLUSTERING))
             {
                 throw new IllegalArgumentException("the CW benchmark requires randomize-clustering bool in config");
@@ -283,7 +287,6 @@ public class BenchmarkConfiguration
         else
         {
             randomizedClustering = null;
-            nodesCount = null;
             cacheValuesCount = null;
             cacheIncrementFactor = null;
             cacheValues = null;

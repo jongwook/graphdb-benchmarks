@@ -10,6 +10,8 @@ import java.util.Set;
  */
 public enum BenchmarkType
 {
+    FIND_NEIGHBOURS_OF_NEIGHBOURS("Find Neighbours of Neighbours of first few nodes", "FindNeighboursOfNeighbours"),
+
     MASSIVE_INSERTION("Massive Insertion", "MassiveInsertion"),
     SINGLE_INSERTION("Single Insertion", "SingleInsertion"),
     DELETION("Delete Graph", "DeleteGraph"),
