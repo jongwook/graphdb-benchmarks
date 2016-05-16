@@ -1,6 +1,7 @@
 package eu.socialsensor.graphdatabases;
 
 import java.io.File;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.neo4j.graphdb.Transaction;
@@ -23,12 +24,13 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
     protected final File dbStorageDirectory;
     protected final MetricRegistry metrics = new MetricRegistry();
     protected final GraphDatabaseType type;
-    private final Timer nextVertexTimes;
-    private final Timer getNeighborsOfVertexTimes;
-    private final Timer nextEdgeTimes;
-    private final Timer getOtherVertexFromEdgeTimes;
-    private final Timer getAllEdgesTimes;
-    private final Timer shortestPathTimes;
+
+    protected final Timer nextVertexTimes;
+    protected final Timer getNeighborsOfVertexTimes;
+    protected final Timer nextEdgeTimes;
+    protected final Timer getOtherVertexFromEdgeTimes;
+    protected final Timer getAllEdgesTimes;
+    protected final Timer shortestPathTimes;
 
     protected GraphDatabaseBase(GraphDatabaseType type, File dbStorageDirectory)
     {
@@ -113,12 +115,13 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
             tx = ((Neo4jGraphDatabase) this).neo4jGraph.beginTx();
         }
         try {
-            VertexIteratorType vertexIterator =  this.getVertexIterator();
-            for (int cnt = 0; vertexIteratorHasNext(vertexIterator) && cnt < n; cnt++) {
+            for (int i = 0; i < n; i++) {
                 VertexType vertex;
                 Timer.Context ctxt = nextVertexTimes.time();
                 try {
-                    vertex = nextVertex(vertexIterator);
+                    vertex = getVertex(i);
+                } catch (NoSuchElementException e) {
+                    continue;
                 } finally {
                     ctxt.stop();
                 }
@@ -154,7 +157,7 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
                 }
                 this.cleanupEdgeIterator(edgeNeighborIterator);
             }
-            this.cleanupVertexIterator(vertexIterator);
+
             if(this instanceof Neo4jGraphDatabase) {
                 ((Transaction) tx).success();
             }

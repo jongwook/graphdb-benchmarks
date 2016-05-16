@@ -5,6 +5,7 @@ import java.util
 import java.util.concurrent.Executors
 import java.util.function.Supplier
 
+import com.codahale.metrics.Timer
 import com.typesafe.config.{Config, ConfigFactory}
 import eu.socialsensor.graphdatabases.S2GraphDatabase._
 import eu.socialsensor.insert.{S2GraphMassiveInsertion, S2GraphSingleInsertion}
@@ -104,7 +105,7 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
       vertices = Seq(v),
       steps = IndexedSeq(Step(
         List(QueryParam(
-          LabelWithDirection(labelId)
+          LabelWithDirection(labelId, 0)
         ))
       ))
     ))
@@ -124,9 +125,49 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
   }
 
 
+  override def findAllNeighboursOfNeighboursOfTheFirstFewNodes(n: Int): Long = {
+    val counts = for (src <- 0 until n) yield {
+      val ctxt: Timer.Context = nextVertexTimes.time
+      val vertex = try {
+        getVertex(src)
+      }
+      catch {
+        case e: NoSuchElementException =>
+          null
+      } finally {
+        ctxt.stop
+      }
 
+      if (vertex != null) {
+        val qp = QueryParam(
+          LabelWithDirection(labelId, 1)
+        )
+        qp.limit = Integer.MAX_VALUE
 
+        val future = s2.getEdges(Query(
+          vertices = Seq(vertex),
+          steps = IndexedSeq(
+            Step(
+              List(qp)
+            ),
+            Step(
+              List(qp)
+            )
+          )
+        ))
+        val result = Await.result(future, 10.seconds)
+        val sizes = result.map(_.queryResult.edgeWithScoreLs.size.toLong)
+        //System.err.println(s"Vertex $src has ${sizes.size} neighbors, ${sizes.mkString("+")}=${sizes.sum} n-of-ns,\n ${result.map(_.queryResult.edgeWithScoreLs.map {
+        //  case EdgeWithScore(edge, score) => edge.srcVertex.id.innerId + " -> " + edge.tgtVertex.id.innerId
+        //}.mkString(", ")).mkString(",\n    ")}")
+        sizes.sum
+      } else {
+        0L
+      }
+    }
 
+    counts.sum
+  }
 
   // non-query
   override def getOtherVertexFromEdge(r: Edge, oneVertex: Vertex): Vertex = if (oneVertex == r.srcVertex) r.tgtVertex else r.srcVertex

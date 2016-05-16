@@ -34,10 +34,8 @@ public final class OrientSingleInsertion extends InsertionBase<Vertex>
     {
         orientGraph.addEdge(null, src, dest, "similar");
 
-        // TODO why commit twice? is this a nested transaction?
         if (orientGraph instanceof TransactionalGraph)
         {
-            ((TransactionalGraph) orientGraph).commit();
             ((TransactionalGraph) orientGraph).commit();
         }
     }
@@ -62,15 +60,5 @@ public final class OrientSingleInsertion extends InsertionBase<Vertex>
         }
 
         return v;
-    }
-
-    @Override
-    protected void post()
-    {
-        super.post();
-        if (orientGraph instanceof TransactionalGraph)
-        {
-            ((TransactionalGraph) orientGraph).commit();
-        }
     }
 }
