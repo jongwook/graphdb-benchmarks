@@ -4,14 +4,15 @@ import java.io.File;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.kernel.GraphDatabaseAPI;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 
 import eu.socialsensor.main.GraphDatabaseBenchmark;
 import eu.socialsensor.main.GraphDatabaseType;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 @SuppressWarnings("deprecation")
 public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, VertexType, EdgeType> implements GraphDatabase<VertexIteratorType, EdgeIteratorType, VertexType, EdgeType>
@@ -100,7 +101,7 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
             }
         } finally {//TODO fix this
             if(GraphDatabaseType.NEO4J == type) {
-                ((Transaction) tx).finish();
+                ((Transaction) tx).close();
             }
         }
     }
@@ -120,6 +121,7 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
                 Timer.Context ctxt = nextVertexTimes.time();
                 try {
                     vertex = getVertex(i);
+                    if (vertex == null) continue;
                 } catch (NoSuchElementException e) {
                     continue;
                 } finally {
@@ -163,7 +165,7 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
             }
         } finally {
             if(GraphDatabaseType.NEO4J == type) {
-                ((Transaction) tx).finish();
+                ((Transaction) tx).close();
             }
         }
 
@@ -174,7 +176,7 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
     public void findNodesOfAllEdges() {
         Object tx = null;
         if(GraphDatabaseType.NEO4J == type) {//TODO fix this
-            tx = ((GraphDatabaseAPI) ((Neo4jGraphDatabase) this).neo4jGraph).tx().unforced().begin();
+            tx = ((Neo4jGraphDatabase) this).neo4jGraph.beginTx();
         }
         try {
             
@@ -230,7 +232,7 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
             }
         } finally {//TODO fix this
             if(GraphDatabaseType.NEO4J == type) {
-                ((Transaction) tx).finish();
+                ((Transaction) tx).close();
             }
         }
     }

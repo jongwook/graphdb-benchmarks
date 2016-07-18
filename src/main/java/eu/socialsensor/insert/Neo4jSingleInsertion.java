@@ -1,19 +1,16 @@
 package eu.socialsensor.insert;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.neo4j.cypher.javacompat.ExecutionEngine;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.kernel.GraphDatabaseAPI;
-
 import eu.socialsensor.graphdatabases.Neo4jGraphDatabase;
 import eu.socialsensor.main.BenchmarkingException;
 import eu.socialsensor.main.GraphDatabaseType;
+import org.neo4j.cypher.internal.javacompat.ExecutionEngine;
+import org.neo4j.cypher.javacompat.internal.GraphDatabaseCypherService;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.logging.NullLogProvider;
+
+import java.io.File;
 
 /**
  * Implementation of single Insertion in Neo4j graph database
@@ -28,33 +25,38 @@ public class Neo4jSingleInsertion extends InsertionBase<Node>
     private final GraphDatabaseService neo4jGraph;
     private final ExecutionEngine engine;
 
+
     public Neo4jSingleInsertion(GraphDatabaseService neo4jGraph, File resultsPath)
     {
         super(GraphDatabaseType.NEO4J, resultsPath);
         this.neo4jGraph = neo4jGraph;
-        engine = new ExecutionEngine(this.neo4jGraph);
+
+        engine = new ExecutionEngine(new GraphDatabaseCypherService(this.neo4jGraph), NullLogProvider.getInstance());
     }
 
     public Node getOrCreate(String nodeId)
     {
         Node result = null;
 
-        try(final Transaction tx = ((GraphDatabaseAPI) neo4jGraph).tx().unforced().begin())
+        try(final Transaction tx = neo4jGraph.beginTx())
         {
-            try
-            {
-                String queryString = "MERGE (n:Node {nodeId: {nodeId}}) RETURN n";
-                Map<String, Object> parameters = new HashMap<String, Object>();
-                parameters.put("nodeId", nodeId);
-                ResourceIterator<Node> resultIterator = engine.execute(queryString, parameters).columnAs("n");
-                result = resultIterator.next();
-                tx.success();
+            result = neo4jGraph.findNode(Neo4jGraphDatabase.NODE_LABEL, "nodeId", nodeId);
+
+            if (result == null) {
+                try
+                {
+                    Node node = neo4jGraph.createNode(Neo4jGraphDatabase.NODE_LABEL);
+                    node.setProperty("nodeId", nodeId);
+                    tx.success();
+                    result = node;
+                }
+                catch (Exception e)
+                {
+                    tx.failure();
+                    throw new BenchmarkingException("unable to get or create node " + nodeId, e);
+                }
             }
-            catch (Exception e)
-            {
-                tx.failure();
-                throw new BenchmarkingException("unable to get or create node " + nodeId, e);
-            }
+            tx.close();
         }
 
         return result;
@@ -63,7 +65,7 @@ public class Neo4jSingleInsertion extends InsertionBase<Node>
     @Override
     public void relateNodes(Node src, Node dest)
     {
-        try (final Transaction tx = ((GraphDatabaseAPI) neo4jGraph).tx().unforced().begin())
+        try (final Transaction tx = neo4jGraph.beginTx())
         {
             try
             {
