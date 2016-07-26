@@ -43,7 +43,13 @@ object S2GraphDatabase {
     })
 
     val hbaseAvailable = try {
-      val socket = new Socket("localhost", 16010)
+      val config = ConfigFactory.load()
+      val (host, port) = config.getString("hbase.zookeeper.quorum").split(":") match {
+        case Array(h, p) => (h, p.toInt)
+        case Array(h) => (h, 2181)
+      }
+
+      val socket = new Socket(host, port)
       socket.close()
       true
     } catch {
