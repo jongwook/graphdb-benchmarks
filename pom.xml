@@ -250,11 +250,6 @@
             <version>${hbase.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>dynamodb-titan054-storage-backend</artifactId>
-            <version>${dynamodb.titan.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.sparsity</groupId>
             <artifactId>sparkseejava</artifactId>
             <version>5.0.0</version>

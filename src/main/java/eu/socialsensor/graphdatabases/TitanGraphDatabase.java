@@ -17,15 +17,6 @@ import java.util.function.Supplier;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.MapConfiguration;
 
-import com.amazon.titan.diskstorage.dynamodb.BackendDataModel;
-import com.amazon.titan.diskstorage.dynamodb.Client;
-import com.amazon.titan.diskstorage.dynamodb.Constants;
-import com.amazon.titan.diskstorage.dynamodb.DynamoDBSingleRowStore;
-import com.amazon.titan.diskstorage.dynamodb.DynamoDBStore;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.ResourceInUseException;
 import com.google.common.collect.Iterables;
 import com.thinkaurelius.titan.core.Multiplicity;
 import com.thinkaurelius.titan.core.PropertyKey;
@@ -156,88 +147,12 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<Vertex>, Iter
         }
         else if (GraphDatabaseType.TITAN_DYNAMODB == type)
         {
-            final Configuration dynamodb = storage.subset("dynamodb");
-            final Configuration client = dynamodb.subset(Constants.DYNAMODB_CLIENT_NAMESPACE.getName());
-            final Configuration credentials = client.subset(Constants.DYNAMODB_CLIENT_CREDENTIALS_NAMESPACE.getName());
-            storage.addProperty("transactions", Boolean.toString(batchLoading));
-            if (bench.getDynamodbDataModel() == null)
-            {
-                throw new IllegalArgumentException("data model must be set for dynamodb benchmarking");
-            }
-            if (GraphDatabaseType.TITAN_DYNAMODB == type && bench.getDynamodbEndpoint() != null
-                && !bench.getDynamodbEndpoint().isEmpty())
-            {
-                client.addProperty(Constants.DYNAMODB_CLIENT_ENDPOINT.getName(), bench.getDynamodbEndpoint());
-                client.addProperty(Constants.DYNAMODB_CLIENT_MAX_CONN.getName(), bench.getDynamodbWorkerThreads());
-            } else {
-                throw new IllegalArgumentException("require endpoint");
-            }
-
-            if (bench.getDynamodbCredentialsFqClassName() != null
-                && !bench.getDynamodbCredentialsFqClassName().isEmpty())
-            {
-                credentials.addProperty(Constants.DYNAMODB_CREDENTIALS_CLASS_NAME.getName(), bench.getDynamodbCredentialsFqClassName());
-            }
-
-            if (bench.getDynamodbCredentialsCtorArguments() != null)
-            {
-                credentials.addProperty(Constants.DYNAMODB_CREDENTIALS_CONSTRUCTOR_ARGS.getName(),
-                    bench.getDynamodbCredentialsCtorArguments());
-            }
-
-            dynamodb.addProperty(Constants.DYNAMODB_FORCE_CONSISTENT_READ.getName(), bench.dynamodbConsistentRead());
-            Configuration executor = client.subset(Constants.DYNAMODB_CLIENT_EXECUTOR_NAMESPACE.getName());
-            executor.addProperty(Constants.DYNAMODB_CLIENT_EXECUTOR_CORE_POOL_SIZE.getName(), bench.getDynamodbWorkerThreads());
-            executor.addProperty(Constants.DYNAMODB_CLIENT_EXECUTOR_MAX_POOL_SIZE.getName(), bench.getDynamodbWorkerThreads());
-            executor.addProperty(Constants.DYNAMODB_CLIENT_EXECUTOR_KEEP_ALIVE.getName(), TimeUnit.MINUTES.toMillis(1));
-            executor.addProperty(Constants.DYNAMODB_CLIENT_EXECUTOR_QUEUE_MAX_LENGTH.getName(), bench.getTitanBufferSize());
-
-            final long writeTps = bench.getDynamodbTps();
-            final long readTps = Math.max(1, bench.dynamodbConsistentRead() ? writeTps : writeTps / 2);
-
-            final Configuration stores = dynamodb.subset(Constants.DYNAMODB_STORES_NAMESPACE.getName());
-            for (String storeName : Constants.REQUIRED_BACKEND_STORES)
-            {
-                final Configuration store = stores.subset(storeName);
-                store.addProperty(Constants.STORES_DATA_MODEL.getName(), bench.getDynamodbDataModel().name());
-                store.addProperty(Constants.STORES_CAPACITY_READ.getName(), readTps);
-                store.addProperty(Constants.STORES_CAPACITY_WRITE.getName(), writeTps);
-                store.addProperty(Constants.STORES_READ_RATE_LIMIT.getName(), readTps);
-                store.addProperty(Constants.STORES_WRITE_RATE_LIMIT.getName(), writeTps);
-            }
         }
         return TitanFactory.open(conf);
     }
 
     private void open(boolean batchLoading)
     {
-        if(type == GraphDatabaseType.TITAN_DYNAMODB && config.getDynamodbPrecreateTables()) {
-            List<CreateTableRequest> requests = new LinkedList<>();
-            long wcu = config.getDynamodbTps();
-            long rcu = Math.max(1, config.dynamodbConsistentRead() ? wcu : (wcu / 2));
-            for(String store : Constants.REQUIRED_BACKEND_STORES) {
-                final String tableName = config.getDynamodbTablePrefix() + "_" + store;
-                if(BackendDataModel.MULTI == config.getDynamodbDataModel()) {
-                    requests.add(DynamoDBStore.createTableRequest(tableName,
-                        rcu, wcu));
-                } else if(BackendDataModel.SINGLE == config.getDynamodbDataModel()) {
-                    requests.add(DynamoDBSingleRowStore.createTableRequest(tableName, rcu, wcu));
-                }
-            }
-            //TODO is this autocloseable?
-            final AmazonDynamoDB client =
-                new AmazonDynamoDBClient(Client.createAWSCredentialsProvider(config.getDynamodbCredentialsFqClassName(),
-                    config.getDynamodbCredentialsCtorArguments() == null ? null : config.getDynamodbCredentialsCtorArguments().split(",")));
-            client.setEndpoint(config.getDynamodbEndpoint());
-            for(CreateTableRequest request : requests) {
-                try {
-                    client.createTable(request);
-                } catch(ResourceInUseException ignore) {
-                    //already created, good
-                }
-            }
-            client.shutdown();
-        }
         titanGraph = buildTitanGraph(type, dbStorageDirectory, config, batchLoading);
     }
 
