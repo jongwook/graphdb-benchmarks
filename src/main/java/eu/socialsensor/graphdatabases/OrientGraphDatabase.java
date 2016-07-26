@@ -86,7 +86,7 @@ public class OrientGraphDatabase extends GraphDatabaseBase<Iterator<Vertex>, Ite
     @Override
     public void massiveModeLoading(Supplier<InputStream> dataPath)
     {
-        OrientMassiveInsertion orientMassiveInsertion = new OrientMassiveInsertion(this.graph.getRawGraph().getURL());
+        OrientMassiveInsertion orientMassiveInsertion = new OrientMassiveInsertion(this.graph);
         orientMassiveInsertion.createGraph(dataPath, 0 /* scenarioNumber */);
     }
 

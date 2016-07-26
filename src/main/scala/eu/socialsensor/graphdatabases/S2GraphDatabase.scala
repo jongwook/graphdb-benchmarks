@@ -90,6 +90,8 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
   // lifecycle
   override def open(): Unit = {
 
+    if (s2 != null) return
+
     // wait until the port 16010 is up
     breakable {
 
@@ -150,7 +152,7 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
   override def createGraphForSingleLoad(): Unit = open()
   override def createGraphForMassiveLoad(): Unit = open()
 
-  override def shutdown(): Unit = s2.shutdown()
+  override def shutdown(): Unit = {} // s2.shutdown()
   override def shutdownMassiveGraph(): Unit = shutdown()
 
 

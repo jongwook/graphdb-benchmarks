@@ -1,11 +1,23 @@
 package eu.socialsensor.insert;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.graph.batch.OGraphBatchInsert;
 import com.orientechnologies.orient.graph.batch.OGraphBatchInsertBasic;
+import com.tinkerpop.blueprints.TransactionalGraph;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 import eu.socialsensor.main.GraphDatabaseType;
+import org.neo4j.helpers.collection.MapUtil;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -15,47 +27,46 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Alexander Patrikalakis
  * 
  */
-public class OrientMassiveInsertion extends InsertionBase<Long> implements Insertion
+public class OrientMassiveInsertion extends InsertionBase<Vertex> implements Insertion
 {
-    private static final int ESTIMATED_ENTRIES = 1000000;
-    private static final int AVERAGE_NUMBER_OF_EDGES_PER_NODE = 40;
-    private static final int NUMBER_OF_ORIENT_CLUSTERS = 16;
-    public final OGraphBatchInsertBasic graph;
+    protected final OrientGraph orientGraph;
+    protected final OIndex<?> index;
 
     private final AtomicInteger counter = new AtomicInteger();
+    private Set<Long> cache = new HashSet<>();
 
-    public OrientMassiveInsertion(final String url)
+    public OrientMassiveInsertion(OrientGraph orientGraph)
     {
-        super(GraphDatabaseType.ORIENT_DB, null /* resultsPath */);
-        OGlobalConfiguration.ENVIRONMENT_CONCURRENT.setValue(false);
-        OrientGraphNoTx transactionlessGraph = new OrientGraphNoTx(url);
-        for (int i = 0; i < NUMBER_OF_ORIENT_CLUSTERS; ++i)
+        super(GraphDatabaseType.ORIENT_DB, null);
+        this.orientGraph = orientGraph;
+        this.index = this.orientGraph.getRawGraph().getMetadata().getIndexManager().getIndex("V.nodeId");
+    }
+
+    @Override
+    protected Vertex getOrCreate(String value)
+    {
+        final int key = Integer.parseInt(value);
+
+        Vertex v;
+        final OIdentifiable rec = (OIdentifiable) index.get(key);
+        if (rec != null)
         {
-            transactionlessGraph.getVertexBaseType().addCluster("v_" + i);
-            transactionlessGraph.getEdgeBaseType().addCluster("e_" + i);
+            return orientGraph.getVertex(rec);
         }
-        transactionlessGraph.shutdown();
 
-        graph = new OGraphBatchInsertBasic(url);
-        graph.setAverageEdgeNumberPerNode(AVERAGE_NUMBER_OF_EDGES_PER_NODE);
-        graph.setEstimatedEntries(ESTIMATED_ENTRIES);
-        graph.begin();
+        v = orientGraph.addVertex(key, "nodeId", key);
+
+        return v;
     }
 
     @Override
-    protected Long getOrCreate(String value)
+    protected void relateNodes(Vertex src, Vertex dest)
     {
-        return Long.parseLong(value);
-    }
-
-    @Override
-    protected void relateNodes(Long src, Long dest)
-    {
-        graph.createEdge(src, dest);
+        orientGraph.addEdge(null, src, dest, "similar");
     }
 
     @Override
     protected void post() {
-        graph.end();
+        orientGraph.commit();
     }
 }
