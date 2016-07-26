@@ -29,15 +29,15 @@ public class FindNeighboursOfNeighboursBenchmark extends PermutingBenchmarkBase 
     @Override
     public void benchmarkOne(GraphDatabaseType type, int scenarioNumber)
     {
+        GraphDatabase<?, ?, ?, ?> graphDatabase = Utils.createDatabaseInstance(bench, type);
+        graphDatabase.open();
         for (int i = 0; i < 100; i++) {
-            GraphDatabase<?, ?, ?, ?> graphDatabase = Utils.createDatabaseInstance(bench, type);
-            graphDatabase.open();
             Stopwatch watch = new Stopwatch();
             watch.start();
             long total = graphDatabase.findAllNeighboursOfNeighboursOfTheFirstFewNodes(nodesCount);
             System.err.println("type = " + type + "; total neighbours of neighbours = " + total);
-            graphDatabase.shutdown();
             times.get(type).add((double) watch.elapsed(TimeUnit.MILLISECONDS));
         }
+        graphDatabase.shutdown();
     }
 }
