@@ -11,7 +11,9 @@ To test S2Graph, this project requires S2Graph JARs to be present in the local m
 
 ## Running
 
-The benchmark can be launched by running the testcase `eu.socialsensor.main.GraphDatabaseBenchmarkTest`
+The benchmark can be launched by running the testcase `eu.socialsensor.main.GraphDatabaseBenchmarkTest`, or
+
+    $ mvn -Pbench test
 
 ## Configuration
 
