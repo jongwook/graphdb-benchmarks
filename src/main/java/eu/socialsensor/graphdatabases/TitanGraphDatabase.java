@@ -705,4 +705,9 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<Vertex>, Iter
     {
         return titanGraph.getVertices(NODE_ID, i.intValue() + 1).iterator().next();
     }
+
+    @Override
+    public int getVertexId(Vertex vertex) {
+        return vertex.<Integer>getProperty(NODE_ID);
+    }
 }

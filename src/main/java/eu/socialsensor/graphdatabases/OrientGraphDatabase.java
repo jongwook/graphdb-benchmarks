@@ -495,4 +495,9 @@ public class OrientGraphDatabase extends GraphDatabaseBase<Iterator<Vertex>, Ite
     {
         return graph.getVertices(NODE_ID, i).iterator().next();
     }
+
+    @Override
+    public int getVertexId(Vertex vertex) {
+        return vertex.getProperty(NODE_ID);
+    }
 }

@@ -1,6 +1,7 @@
 package eu.socialsensor.graphdatabases;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -128,6 +129,8 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
                     ctxt.stop();
                 }
 
+                Set<Integer> dests = new HashSet<>();
+
                 final EdgeIteratorType edgeNeighborIterator;
                 ctxt = getNeighborsOfVertexTimes.time();
                 try {
@@ -151,12 +154,15 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
                         EdgeIteratorType neighborOfNeighbor = this.getNeighborsOfVertex(other);
                         while (edgeIteratorHasNext(neighborOfNeighbor)) {
                             edge = nextEdge(neighborOfNeighbor);
-                            total++;
+                            VertexType dest = getDestVertexFromEdge(edge);
+                            dests.add(getVertexId(dest));
                         }
                     } finally {
                         ctxt.stop();
                     }
                 }
+
+                total += dests.size();
                 this.cleanupEdgeIterator(edgeNeighborIterator);
             }
 

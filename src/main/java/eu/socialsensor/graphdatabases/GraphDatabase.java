@@ -20,7 +20,8 @@ public interface GraphDatabase<VertexIteratorType, EdgeIteratorType, VertexType,
     public VertexType getSrcVertexFromEdge(EdgeType edge);
     public VertexType getDestVertexFromEdge(EdgeType edge);
     public VertexType getVertex(Integer i);
-    
+    public int getVertexId(VertexType vertex);
+
     //edge iterators
     public EdgeIteratorType getAllEdges();
     public EdgeIteratorType getNeighborsOfVertex(VertexType v);

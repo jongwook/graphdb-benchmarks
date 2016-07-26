@@ -52,7 +52,7 @@
     <properties>
         <s2graph.version>0.12.1-SNAPSHOT</s2graph.version>
         <blueprints.version>2.6.0</blueprints.version>
-        <orientdb.version>2.2.4</orientdb.version>
+        <orientdb.version>2.2.5</orientdb.version>
         <titan.version>0.5.4</titan.version>
         <hbase.version>1.0.1</hbase.version>
         <neo4j.version>3.0.3</neo4j.version>

@@ -1,6 +1,7 @@
 package eu.socialsensor.graphdatabases
 
-import java.io.{InputStream, File}
+import java.io.{IOException, InputStream, File}
+import java.net.{Socket, URL}
 import java.util
 import java.util.concurrent.Executors
 import java.util.function.Supplier
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
+import scala.util.control.Breaks._
 import scala.util.{Failure, Success}
 
 object S2GraphDatabase {
@@ -31,7 +33,44 @@ object S2GraphDatabase {
   lazy val column: ServiceColumn = ServiceColumn.find(serviceId, "item_id").get
   lazy val columnId: Int = column.id.get
 
+  val hbaseExecutor = {
+    val executor = Executors.newSingleThreadExecutor()
 
+    Runtime.getRuntime.addShutdownHook(new Thread() {
+      override def run(): Unit = {
+        executor.shutdown()
+      }
+    })
+
+    val hbaseAvailable = try {
+      val socket = new Socket("localhost", 16010)
+      socket.close()
+      true
+    } catch {
+      case e: IOException => false
+    }
+
+    if (!hbaseAvailable) {
+      // start HBase
+      executor.submit(new Runnable {
+        override def run(): Unit = {
+          val cwd = new File(".").getAbsolutePath
+
+          System.setProperty("proc_master", "")
+          System.setProperty("hbase.log.dir", s"$cwd/storage/s2graph/hbase/")
+          System.setProperty("hbase.log.file", s"$cwd/storage/s2graph/hbase.log")
+          System.setProperty("hbase.tmp.dir", s"$cwd/storage/s2graph/hbase/")
+          System.setProperty("hbase.home.dir", "")
+          System.setProperty("hbase.id.str", "s2graph")
+          System.setProperty("hbase.root.logger", "INFO,RFA")
+
+          org.apache.hadoop.hbase.master.HMaster.main(Array[String]("start"))
+        }
+      })
+    }
+
+    executor
+  }
 }
 
 class S2GraphDatabase(config: Config, dbStorageDirectory: File)
@@ -44,6 +83,27 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
 
   // lifecycle
   override def open(): Unit = {
+
+    // wait until the port 16010 is up
+    breakable {
+
+      while (true) {
+        logger.info(s"hbaseExecutor.isShutdown = ${hbaseExecutor.isShutdown}")
+        val available = try {
+          val socket = new Socket("localhost", 16010)
+          socket.close()
+          true
+        } catch {
+          case e: Throwable =>
+            logger.info("retrying port 16010", e)
+            false
+        }
+        if (available) {
+          break
+        }
+      }
+    }
+
     val config = ConfigFactory.load()
     s2 = new Graph(config)
     mgmt = new Management(s2)
@@ -85,7 +145,7 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
   override def createGraphForMassiveLoad(): Unit = open()
 
   override def shutdown(): Unit = s2.shutdown()
-  override def shutdownMassiveGraph(): Unit = s2.shutdown()
+  override def shutdownMassiveGraph(): Unit = shutdown()
 
 
   // main benchmark methods
@@ -124,6 +184,9 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
     vertex
   }
 
+  override def getVertexId(vertex: Vertex): Int = {
+    vertex.id.innerId.toString().toInt
+  }
 
   override def findAllNeighboursOfNeighboursOfTheFirstFewNodes(n: Int): Long = {
     val counts = for (src <- 0 until n) yield {
@@ -156,11 +219,12 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
           )
         ))
         val result = Await.result(future, 10.seconds)
-        val sizes = result.map(_.queryResult.edgeWithScoreLs.size.toLong)
-        //System.err.println(s"Vertex $src has ${sizes.size} neighbors, ${sizes.mkString("+")}=${sizes.sum} n-of-ns,\n ${result.map(_.queryResult.edgeWithScoreLs.map {
-        //  case EdgeWithScore(edge, score) => edge.srcVertex.id.innerId + " -> " + edge.tgtVertex.id.innerId
-        //}.mkString(", ")).mkString(",\n    ")}")
-        sizes.sum
+        //val sizes = result.map(_.queryResult.edgeWithScoreLs.size.toLong)
+        //sizes.sum
+        result.flatMap {
+          result => result.queryResult.edgeWithScoreLs.map(_.edge.tgtVertex.id)
+        }.toSet.size
+
       } else {
         0L
       }

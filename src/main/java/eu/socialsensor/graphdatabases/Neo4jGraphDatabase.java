@@ -784,4 +784,8 @@ public class Neo4jGraphDatabase extends GraphDatabaseBase<Iterator<Node>, Iterat
         return neo4jGraph.findNode(Neo4jGraphDatabase.NODE_LABEL, NODE_ID, i.toString());
     }
 
+    @Override
+    public int getVertexId(Node vertex) {
+        return Integer.parseInt(vertex.getProperty(NODE_ID).toString());
+    }
 }

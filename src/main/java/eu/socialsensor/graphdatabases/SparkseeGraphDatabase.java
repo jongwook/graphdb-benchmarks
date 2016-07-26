@@ -605,4 +605,9 @@ public class SparkseeGraphDatabase extends GraphDatabaseBase<ObjectsIterator, Ob
         int nodeAttribute = sparkseeGraph.findAttribute(nodeType, NODE_ID);
         return sparkseeGraph.findObject(nodeAttribute, value.setInteger(i));
     }
+
+    @Override
+    public int getVertexId(Long vertex) {
+        return vertex.intValue();
+    }
 }
