@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 
 import eu.socialsensor.graphdatabases.S2GraphDatabase._
 import eu.socialsensor.main.GraphDatabaseType
+import org.apache.s2graph.core.mysqls.LabelMeta
 import org.apache.s2graph.core.types.{InnerValLikeWithTs, InnerVal, LabelWithDirection, VertexId}
 import org.apache.s2graph.core.{GraphUtil, Edge, Graph, Vertex}
 import org.slf4j.LoggerFactory
@@ -28,8 +29,8 @@ class S2GraphMassiveInsertion(graph: Graph) extends InsertionBase[Vertex](GraphD
   override protected def relateNodes(src: Vertex, dest: Vertex): Unit = {
     val ts = System.currentTimeMillis()
     val edge = Edge(
-      src, dest, LabelWithDirection(labelId, 0),
-      propsWithTs = Map(0.toByte -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
+      src, dest, label, GraphUtil.directions("out"),
+      propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
       op = GraphUtil.operations("insertBulk")
     )
     waiting.incrementAndGet()
