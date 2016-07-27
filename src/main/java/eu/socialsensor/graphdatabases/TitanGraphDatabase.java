@@ -1,46 +1,29 @@
 package eu.socialsensor.graphdatabases;
 
-import java.io.File;
-import java.io.IOError;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.thinkaurelius.titan.core.*;
 import com.thinkaurelius.titan.core.attribute.Cmp;
-import com.tinkerpop.blueprints.Vertex;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.MapConfiguration;
-
-import com.google.common.collect.Iterables;
 import com.thinkaurelius.titan.core.schema.TitanManagement;
 import com.thinkaurelius.titan.core.util.TitanCleanup;
 import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration;
-import com.tinkerpop.blueprints.util.wrappers.batch.BatchGraph;
-import com.tinkerpop.blueprints.util.wrappers.batch.VertexIDType;
-import com.tinkerpop.gremlin.java.GremlinPipeline;
-import com.tinkerpop.pipes.PipeFunction;
-import com.tinkerpop.pipes.branch.LoopPipe.LoopBundle;
-
 import eu.socialsensor.insert.Insertion;
 import eu.socialsensor.insert.TitanMassiveInsertion;
 import eu.socialsensor.insert.TitanSingleInsertion;
 import eu.socialsensor.main.BenchmarkConfiguration;
 import eu.socialsensor.main.GraphDatabaseType;
 import eu.socialsensor.utils.Utils;
-import org.apache.tinkerpop.gremlin.process.computer.bulkloading.BulkLoader;
-import org.apache.tinkerpop.gremlin.process.computer.bulkloading.IncrementalBulkLoader;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.MapConfiguration;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
+
+import java.io.File;
+import java.io.IOError;
+import java.io.InputStream;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Titan graph database implementation
@@ -252,24 +235,13 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<TitanVertex>,
     @Override
     public void shortestPath(final TitanVertex fromNode, Integer node)
     {
-        final TitanVertex v2 = (TitanVertex) titanGraph.query().has(NODE_ID, Cmp.EQUAL, node).vertices().iterator().next();
-        @SuppressWarnings("rawtypes")
-        final GremlinPipeline<String, List> pathPipe = new GremlinPipeline<String, List>(fromNode).as(SIMILAR)
-            .out(SIMILAR).loop(SIMILAR, new PipeFunction<LoopBundle<Vertex>, Boolean>() {
-                // @Override
-                public Boolean compute(LoopBundle<Vertex> bundle)
-                {
-                    return bundle.getLoops() < 5 && !bundle.getObject().equals(v2);
-                }
-            }).path();
-        @SuppressWarnings("unused")
-        int length = pathPipe.iterator().next().size();
+        throw new NotImplementedException("Titan.shortestPath");
     }
 
     @Override
     public int getNodeCount()
     {
-        long nodeCount = new GremlinPipeline<Object, Object>(titanGraph).V().count();
+        long nodeCount = Iterators.size(titanGraph.vertices());
         return (int) nodeCount;
     }
 
@@ -278,11 +250,11 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<TitanVertex>,
     {
         Set<Integer> neighbors = new HashSet<Integer>();
         TitanVertex vertex = (TitanVertex) titanGraph.query().has(NODE_ID, Cmp.EQUAL, nodeId).vertices().iterator().next();
-        GremlinPipeline<String, Vertex> pipe = new GremlinPipeline<String, Vertex>(vertex).out(SIMILAR);
-        Iterator<Vertex> iter = pipe.iterator();
+
+        Iterator<Edge> iter = vertex.edges(Direction.OUT, SIMILAR);
         while (iter.hasNext())
         {
-            Integer neighborId = iter.next().getProperty(NODE_ID);
+            Integer neighborId = iter.next().outVertex().<Integer>property(NODE_ID).value();
             neighbors.add(neighborId);
         }
         return neighbors;
@@ -298,14 +270,12 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<TitanVertex>,
 
     public double getNodeInDegree(TitanVertex vertex)
     {
-        GremlinPipeline<String, Vertex> pipe = new GremlinPipeline<String, Vertex>(vertex).in(SIMILAR);
-        return (double) pipe.count();
+        return (double) Iterators.size(vertex.edges(Direction.IN, SIMILAR));
     }
 
     public double getNodeOutDegree(TitanVertex vertex)
     {
-        GremlinPipeline<String, Vertex> pipe = new GremlinPipeline<String, Vertex>(vertex).out(SIMILAR);
-        return (double) pipe.count();
+        return (double) Iterators.size(vertex.edges(Direction.OUT, SIMILAR));
     }
 
     @Override
@@ -327,11 +297,10 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<TitanVertex>,
         Iterable<TitanVertex> vertices = titanGraph.query().has(NODE_COMMUNITY, nodeCommunities).vertices();
         for (TitanVertex vertex : vertices)
         {
-            GremlinPipeline<String, Vertex> pipe = new GremlinPipeline<String, Vertex>(vertex).out(SIMILAR);
-            Iterator<Vertex> iter = pipe.iterator();
+            Iterator<Edge> iter = vertex.edges(Direction.OUT, SIMILAR);
             while (iter.hasNext())
             {
-                int community = iter.next().getProperty(COMMUNITY);
+                int community = iter.next().outVertex().<Integer>property(COMMUNITY).value();
                 communities.add(community);
             }
         }
