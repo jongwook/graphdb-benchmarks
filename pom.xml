@@ -53,7 +53,7 @@
         <s2graph.version>0.13.0</s2graph.version>
         <blueprints.version>2.6.0</blueprints.version>
         <orientdb.version>2.2.5</orientdb.version>
-        <titan.version>0.5.4</titan.version>
+        <titan.version>1.0.0</titan.version>
         <hbase.version>1.0.1</hbase.version>
         <neo4j.version>3.0.3</neo4j.version>
         <dynamodb.titan.version>1.0.0</dynamodb.titan.version>
@@ -104,7 +104,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>14.0.1</version>
+            <version>16.0.1</version>
         </dependency>
         <dependency>
             <groupId>colt</groupId>
@@ -243,6 +243,11 @@
             <groupId>com.thinkaurelius.titan</groupId>
             <artifactId>titan-core</artifactId>
             <version>${titan.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.carrotsearch</groupId>
+            <artifactId>hppc</artifactId>
+            <version>0.7.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
