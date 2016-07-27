@@ -21,7 +21,8 @@ public enum GraphDatabaseType
     ORIENT_DB("OrientDB", null, "orient"),
     NEO4J("Neo4j", null, "neo4j"),
     SPARKSEE("Sparksee", null, "sparksee"),
-    S2GRAPH("S2Graph", null, "s2graph");
+    S2GRAPH_HBASE("S2Graph", "hbase", "s2graph-hbase"),
+    S2GRAPH_ROCKS("S2Graph", "rocks", "s2graph-rocks");
 
     private final String backend;
     private final String api;
@@ -29,6 +30,7 @@ public enum GraphDatabaseType
 
     public static final Map<String, GraphDatabaseType> STRING_REP_MAP = new HashMap<String, GraphDatabaseType>();
     public static final Set<GraphDatabaseType> TITAN_FLAVORS = new HashSet<GraphDatabaseType>();
+    public static final  Set<GraphDatabaseType> S2GRAPH_FLAVORS = new HashSet<>();
     static
     {
         for (GraphDatabaseType db : values())
@@ -41,6 +43,8 @@ public enum GraphDatabaseType
         TITAN_FLAVORS.add(TITAN_CASSANDRA_EMBEDDED);
         TITAN_FLAVORS.add(TITAN_HBASE);
         TITAN_FLAVORS.add(TITAN_PERSISTIT);
+        S2GRAPH_FLAVORS.add(S2GRAPH_HBASE);
+        S2GRAPH_FLAVORS.add(S2GRAPH_ROCKS);
     }
 
     private GraphDatabaseType(String api, String backend, String shortname)

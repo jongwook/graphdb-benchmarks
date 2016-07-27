@@ -113,8 +113,8 @@ object S2GraphDatabase {
   }
 }
 
-class S2GraphDatabase(config: Config, dbStorageDirectory: File)
-  extends GraphDatabaseBase[Iterator[Vertex], Iterator[Edge], Vertex, Edge](GraphDatabaseType.S2GRAPH, dbStorageDirectory) {
+class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirectory: File)
+  extends GraphDatabaseBase[Iterator[Vertex], Iterator[Edge], Vertex, Edge](backend, dbStorageDirectory) {
 
   val logger = LoggerFactory.getLogger(getClass)
   var s2: Graph = _
@@ -195,12 +195,12 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
 
   // main benchmark methods
   override def singleModeLoading(dataPath: Supplier[InputStream], resultsPath: File, scenarioNumber: Int): Unit = {
-    val s2graphSingleInsertion = new S2GraphSingleInsertion(this.s2, resultsPath)
+    val s2graphSingleInsertion = new S2GraphSingleInsertion(backend, this.s2, resultsPath)
     s2graphSingleInsertion.createGraph(dataPath, scenarioNumber)
   }
 
   override def massiveModeLoading(dataPath: Supplier[InputStream]): Unit = {
-    val s2graphMassiveInsertion = new S2GraphMassiveInsertion(this.s2)
+    val s2graphMassiveInsertion = new S2GraphMassiveInsertion(backend, this.s2)
     s2graphMassiveInsertion.createGraph(dataPath, 1)
   }
 

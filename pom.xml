@@ -81,27 +81,6 @@
             <version>1.4.192</version>
         </dependency>
         <dependency>
-            <groupId>com.stumbleupon</groupId>
-            <artifactId>async</artifactId>
-            <version>1.4.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/async-1.4.0.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>com.stumbleupon</groupId>
-            <artifactId>asynchbase</artifactId>
-            <version>1.7.1-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/asynchbase-1.7.1-SNAPSHOT.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.netty</groupId>
-            <artifactId>netty</artifactId>
-            <version>3.9.4.Final</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/netty-3.9.4.Final.jar</systemPath>
-        </dependency>
-        <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr-runtime</artifactId>
             <version>3.2</version>
@@ -212,32 +191,9 @@
             <version>0.3</version>
         </dependency>
         <dependency>
-            <groupId>com.thinkaurelius.titan</groupId>
-            <artifactId>titan-berkeleyje</artifactId>
-            <version>${titan.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.thinkaurelius.titan</groupId>
-            <artifactId>titan-cassandra</artifactId>
-            <version>${titan.version}</version>
-            <!--
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
-                    <artifactId>httpcore</artifactId>
-                </exclusion>
-            </exclusions>
-            -->
-        </dependency>
-        <dependency>
-            <groupId>com.thinkaurelius.titan</groupId>
-            <artifactId>titan-hbase</artifactId>
-            <version>${titan.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.thinkaurelius.titan</groupId>
-            <artifactId>titan-core</artifactId>
-            <version>${titan.version}</version>
+            <groupId>com.github.jongwook</groupId>
+            <artifactId>shades</artifactId>
+            <version>0.0.5-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.carrotsearch</groupId>
@@ -505,4 +461,11 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <repositories>
+        <repository>
+            <id>oss-snapshots</id>
+            <name>Sonatype Snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+    </repositories>
 </project>

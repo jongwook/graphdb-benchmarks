@@ -13,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class S2GraphMassiveInsertion(graph: Graph) extends InsertionBase[Vertex](GraphDatabaseType.S2GRAPH, null) {
+class S2GraphMassiveInsertion(backend: GraphDatabaseType, graph: Graph) extends InsertionBase[Vertex](backend, null) {
 
   val logger = LoggerFactory.getLogger(getClass)
   val waiting = new AtomicInteger()
