@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class S2GraphSingleInsertion(graph: Graph, resultsPath: File) extends InsertionBase[Vertex](GraphDatabaseType.S2GRAPH, resultsPath) {
+class S2GraphSingleInsertion(backend: GraphDatabaseType, graph: Graph, resultsPath: File) extends InsertionBase[Vertex](backend, resultsPath) {
 
   val logger = LoggerFactory.getLogger(getClass)
   val waiting = new AtomicInteger()

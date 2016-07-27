@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import eu.socialsensor.graphdatabases.*;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -192,9 +193,11 @@ public class Utils
         {
             graphDatabase = new SparkseeGraphDatabase(config, dbStorageDirectory);
         }
-        else if (GraphDatabaseType.S2GRAPH == type)
+        else if (GraphDatabaseType.S2GRAPH_FLAVORS.contains(type))
         {
-            graphDatabase = new S2GraphDatabase(ConfigFactory.load(), dbStorageDirectory);
+            Config conf = ConfigFactory.parseString("s2graph.storage.backend=" + type.getBackend()).withFallback(ConfigFactory.load());
+
+            graphDatabase = new S2GraphDatabase(type, conf, dbStorageDirectory);
         }
         else
         {
