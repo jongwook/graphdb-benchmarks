@@ -33,50 +33,50 @@ object S2GraphDatabase {
   lazy val column: ServiceColumn = ServiceColumn.find(serviceId, "item_id").get
   lazy val columnId: Int = column.id.get
 
-  val hbaseExecutor = {
-    val executor = Executors.newSingleThreadExecutor()
-
-    Runtime.getRuntime.addShutdownHook(new Thread() {
-      override def run(): Unit = {
-        executor.shutdown()
-      }
-    })
-
-    val hbaseAvailable = try {
-      val config = ConfigFactory.load()
-      val (host, port) = config.getString("hbase.zookeeper.quorum").split(":") match {
-        case Array(h, p) => (h, p.toInt)
-        case Array(h) => (h, 2181)
-      }
-
-      val socket = new Socket(host, port)
-      socket.close()
-      true
-    } catch {
-      case e: IOException => false
-    }
-
-    if (!hbaseAvailable) {
-      // start HBase
-      executor.submit(new Runnable {
-        override def run(): Unit = {
-          val cwd = new File(".").getAbsolutePath
-
-          System.setProperty("proc_master", "")
-          System.setProperty("hbase.log.dir", s"$cwd/storage/s2graph/hbase/")
-          System.setProperty("hbase.log.file", s"$cwd/storage/s2graph/hbase.log")
-          System.setProperty("hbase.tmp.dir", s"$cwd/storage/s2graph/hbase/")
-          System.setProperty("hbase.home.dir", "")
-          System.setProperty("hbase.id.str", "s2graph")
-          System.setProperty("hbase.root.logger", "INFO,RFA")
-
-          org.apache.hadoop.hbase.master.HMaster.main(Array[String]("start"))
-        }
-      })
-    }
-
-    executor
-  }
+//  val hbaseExecutor = {
+//    val executor = Executors.newSingleThreadExecutor()
+//
+//    Runtime.getRuntime.addShutdownHook(new Thread() {
+//      override def run(): Unit = {
+//        executor.shutdown()
+//      }
+//    })
+//
+//    val hbaseAvailable = try {
+//      val config = ConfigFactory.load()
+//      val (host, port) = config.getString("hbase.zookeeper.quorum").split(":") match {
+//        case Array(h, p) => (h, p.toInt)
+//        case Array(h) => (h, 2181)
+//      }
+//
+//      val socket = new Socket(host, port)
+//      socket.close()
+//      true
+//    } catch {
+//      case e: IOException => false
+//    }
+//
+//    if (!hbaseAvailable) {
+//      // start HBase
+//      executor.submit(new Runnable {
+//        override def run(): Unit = {
+//          val cwd = new File(".").getAbsolutePath
+//
+//          System.setProperty("proc_master", "")
+//          System.setProperty("hbase.log.dir", s"$cwd/storage/s2graph/hbase/")
+//          System.setProperty("hbase.log.file", s"$cwd/storage/s2graph/hbase.log")
+//          System.setProperty("hbase.tmp.dir", s"$cwd/storage/s2graph/hbase/")
+//          System.setProperty("hbase.home.dir", "")
+//          System.setProperty("hbase.id.str", "s2graph")
+//          System.setProperty("hbase.root.logger", "INFO,RFA")
+//
+//          org.apache.hadoop.hbase.master.HMaster.main(Array[String]("start"))
+//        }
+//      })
+//    }
+//
+//    executor
+//  }
 }
 
 class S2GraphDatabase(config: Config, dbStorageDirectory: File)
@@ -85,7 +85,7 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
   val logger = LoggerFactory.getLogger(getClass)
   var s2: Graph = _
   var mgmt: Management = _
-  var label: String = _
+  val labelName: String = "benchmark"
 
   // lifecycle
   override def open(): Unit = {
@@ -93,24 +93,24 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
     if (s2 != null) return
 
     // wait until the port 16010 is up
-    breakable {
-
-      while (true) {
-        logger.info(s"hbaseExecutor.isShutdown = ${hbaseExecutor.isShutdown}")
-        val available = try {
-          val socket = new Socket("localhost", 16010)
-          socket.close()
-          true
-        } catch {
-          case e: Throwable =>
-            logger.info("retrying port 16010", e)
-            false
-        }
-        if (available) {
-          break
-        }
-      }
-    }
+//    breakable {
+//
+//      while (true) {
+//        logger.info(s"hbaseExecutor.isShutdown = ${hbaseExecutor.isShutdown}")
+//        val available = try {
+//          val socket = new Socket("localhost", 16010)
+//          socket.close()
+//          true
+//        } catch {
+//          case e: Throwable =>
+//            logger.info("retrying port 16010", e)
+//            false
+//        }
+//        if (available) {
+//          break
+//        }
+//      }
+//    }
 
     val config = ConfigFactory.load()
     s2 = new Graph(config)
@@ -141,9 +141,11 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
       consistencyLevel = "weak",
       hTableName = None,
       hTableTTL = None,
-      isAsync = false
+      isAsync = false,
+      options = None
     ) match {
-      case Success(l) => logger.info(s"Created label: $l")
+      case Success(l) =>
+        logger.info(s"Created label: $l")
       case Failure(e) => logger.warn(s"Did not create label: $e")
     }
 
@@ -169,24 +171,23 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
 
   // OLTP-style queries
   override def getNeighborsOfVertex(v: Vertex): Iterator[Edge] = {
-    val future = s2.getEdges(Query(
+    val future = s2.getEdges(S2Query(
+      queryOption = QueryOption(withScore = false, returnDegree = false),
       vertices = Seq(v),
       steps = IndexedSeq(Step(
-        List(QueryParam(
-          LabelWithDirection(labelId, 0)
+        List(S2QueryParam(
+          labelName = labelName, direction = "out"
         ))
       ))
     ))
     val result = Await.result(future, 5.seconds)
-    result.flatMap {
-      _.queryResult.edgeWithScoreLs.map(_.edge)
-    }.iterator
+    result.edgeWithScores.map(_.edge).iterator
   }
 
+  private def toVertex(i: Integer): Vertex = Vertex.toVertex(serviceName = service.serviceName, columnName = column.columnName, i)
+
   override def getVertex(i: Integer): Vertex = {
-    val vertex = Vertex(
-      VertexId(columnId, InnerVal.withStr(i.toString, column.schemaVersion))
-    )
+    val vertex =toVertex(i)
     val future = s2.getVertices(Seq(vertex))
     val result = Await.result(future, 5.seconds)
     vertex
@@ -200,7 +201,7 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
     val counts = for (src <- 0 until n) yield {
       val ctxt: Timer.Context = nextVertexTimes.time
       val vertex = try {
-        getVertex(src)
+        toVertex(src)
       }
       catch {
         case e: NoSuchElementException =>
@@ -210,12 +211,14 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
       }
 
       if (vertex != null) {
-        val qp = QueryParam(
-          LabelWithDirection(labelId, 1)
+        val qp = S2QueryParam(
+          labelName = labelName,
+          direction = "in",
+          limit = Int.MaxValue
         )
-        qp.limit = Integer.MAX_VALUE
 
-        val future = s2.getEdges(Query(
+        val future = s2.getEdges(S2Query(
+          queryOption = QueryOption(withScore = false, returnDegree = false),
           vertices = Seq(vertex),
           steps = IndexedSeq(
             Step(
@@ -227,12 +230,8 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
           )
         ))
         val result = Await.result(future, 10.seconds)
-        //val sizes = result.map(_.queryResult.edgeWithScoreLs.size.toLong)
-        //sizes.sum
-        result.flatMap {
-          result => result.queryResult.edgeWithScoreLs.map(_.edge.tgtVertex.id)
-        }.toSet.size
 
+        result.edgeWithScores.map(_.edge.tgtId).toSet.size
       } else {
         0L
       }

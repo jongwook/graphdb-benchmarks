@@ -31,7 +31,7 @@ public class FindNeighboursOfNeighboursBenchmark extends PermutingBenchmarkBase 
     {
         GraphDatabase<?, ?, ?, ?> graphDatabase = Utils.createDatabaseInstance(bench, type);
         graphDatabase.open();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 3; i++) {
             Stopwatch watch = new Stopwatch();
             watch.start();
             long total = graphDatabase.findAllNeighboursOfNeighboursOfTheFirstFewNodes(nodesCount);
