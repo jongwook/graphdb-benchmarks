@@ -1,11 +1,19 @@
 package eu.socialsensor.insert;
 
 import com.thinkaurelius.titan.core.TitanGraph;
+import com.thinkaurelius.titan.core.TitanVertex;
+import com.thinkaurelius.titan.core.attribute.Cmp;
 import com.thinkaurelius.titan.core.util.TitanId;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.util.wrappers.batch.BatchGraph;
 
+import com.thinkaurelius.titan.graphdb.database.StandardTitanGraph;
 import eu.socialsensor.main.GraphDatabaseType;
+import org.apache.tinkerpop.gremlin.process.computer.bulkloading.BulkLoader;
+import org.apache.tinkerpop.gremlin.process.computer.bulkloading.BulkLoaderVertexProgram;
+import org.apache.tinkerpop.gremlin.process.computer.bulkloading.IncrementalBulkLoader;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+
+import java.io.File;
 
 /**
  * Implementation of massive Insertion in Titan graph database
@@ -14,34 +22,46 @@ import eu.socialsensor.main.GraphDatabaseType;
  * @author Alexander Patrikalakis
  * 
  */
-public class TitanMassiveInsertion extends InsertionBase<Vertex>
+public class TitanMassiveInsertion extends InsertionBase<TitanVertex>
 {
-    private final BatchGraph<TitanGraph> batchGraph;
+    private final StandardTitanGraph titanGraph;
 
-    public TitanMassiveInsertion(BatchGraph<TitanGraph> batchGraph, GraphDatabaseType type)
+    public TitanMassiveInsertion(TitanGraph titanGraph, GraphDatabaseType type)
     {
-        super(type, null /* resultsPath */); // no temp files for massive load
-                                             // insert
-        this.batchGraph = batchGraph;
+        super(type, null);
+        this.titanGraph = (StandardTitanGraph) titanGraph;
     }
 
     @Override
-    public Vertex getOrCreate(String value)
+    public TitanVertex getOrCreate(String value)
     {
-        Integer intVal = Integer.valueOf(value) + 1;
-        final long titanVertexId = TitanId.toVertexId(intVal);
-        Vertex vertex = batchGraph.getVertex(titanVertexId);
-        if (vertex == null)
+        Integer intValue = Integer.valueOf(value) + 1;
+        final TitanVertex v;
+        if (titanGraph.query().has("nodeId", Cmp.EQUAL, intValue).vertices().iterator().hasNext())
         {
-            vertex = batchGraph.addVertex(titanVertexId);
-            vertex.setProperty("nodeId", intVal);
+            v = (TitanVertex) titanGraph.query().has("nodeId", Cmp.EQUAL, intValue).vertices().iterator().next();
         }
-        return vertex;
+        else
+        {
+            final long titanVertexId = TitanId.toVertexId(intValue);
+            v = titanGraph.addVertex();
+            v.property("nodeId", intValue);
+            titanGraph.tx().commit();
+        }
+        return v;
     }
 
     @Override
-    public void relateNodes(Vertex src, Vertex dest)
+    public void relateNodes(TitanVertex src, TitanVertex dest)
     {
-        src.addEdge("similar", dest);
+        try
+        {
+            src.addEdge("similar", dest);
+            titanGraph.tx().commit();
+        }
+        catch (Exception e)
+        {
+            titanGraph.tx().rollback(); //TODO(amcp) why can this happen? doesn't this indicate illegal state?
+        }
     }
 }

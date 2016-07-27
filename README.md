@@ -1,7 +1,7 @@
 graphdb-benchmarks
 ==================
 
-This is a clone of SocialSensor's [graphdb-benchmarks](https://github.com/socialsensor/graphdb-benchmarks) repo which adds the tests for [S2Graph](https://github.com/apache/incubator-s2graph).
+This is a fork of SocialSensor's [graphdb-benchmarks](https://github.com/socialsensor/graphdb-benchmarks) repo which adds the tests for [S2Graph](https://github.com/apache/incubator-s2graph).
 
 ## Setup
 
@@ -17,7 +17,11 @@ The benchmark can be launched by running the testcase `eu.socialsensor.main.Grap
 
 ## Configuration
 
-All configurations for the benchmark, including which graph backend and which graph backend to use, need to be specified in the file `/test/resources/META-INF/input.properties`.
+All configurations for the benchmark, including which graph/storage backend to use, need to be specified in the file `/test/resources/META-INF/input.properties`.
+
+Additionally, it is recommended to give the JVM enough heap space, e.g.
+
+    $ export MAVEN_OPTS="-Xmx16g"
 
 ## The Storage
 
@@ -26,6 +30,10 @@ The tests utilizes the local directory `/storage` for storing graph data represe
 To reset the storage, run
 
     $ rm -r storage/*
+
+## Caveat
+
+When using HBase storage backend, an HBase server along with ZooKeeper will be launched in the same JVM, provided that the configured zookeeper host/port is not accessible. HBase server may fail in restricted networks like a public WiFi network; in those case, turn off the problematic network interface.
 
 ## The Data
 
