@@ -1,7 +1,7 @@
 package eu.socialsensor.graphdatabases
 
 import java.io.{IOException, InputStream, File}
-import java.net.{Socket, URL}
+import java.net.{ConnectException, Socket, URL}
 import java.util
 import java.util.concurrent.Executors
 import java.util.function.Supplier
@@ -12,19 +12,53 @@ import eu.socialsensor.graphdatabases.S2GraphDatabase._
 import eu.socialsensor.insert.{S2GraphMassiveInsertion, S2GraphSingleInsertion}
 import eu.socialsensor.main.GraphDatabaseType
 import org.apache.s2graph.core._
-import org.apache.s2graph.core.mysqls.{Label, Service, ServiceColumn}
+import org.apache.s2graph.core.mysqls.{Model, Label, Service, ServiceColumn}
 import org.apache.s2graph.core.types.{InnerVal, VertexId, LabelWithDirection}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
+import scala.io.Source
 import scala.util.control.Breaks._
 import scala.util.{Failure, Success}
+import scalikejdbc._
+
 
 object S2GraphDatabase {
 
+  val logger = LoggerFactory.getLogger(getClass)
   val nThreads = Runtime.getRuntime.availableProcessors()
   implicit val context = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(nThreads * 2))
+
+  import org.apache.s2graph.core.mysqls.Model.withTx
+
+  Model.apply(ConfigFactory.load())
+  withTx { implicit session =>
+    sql"""show tables""".map(rs => rs.string(1)).list.apply()
+  } match {
+    case Success(tables) =>
+      if (tables.isEmpty) {
+        // this is a very simple migration tool that only supports creating
+        // appropriate tables when there are no tables in the database at all.
+        // Ideally, it should be improved to a sophisticated migration tool
+        // that supports versioning, etc.
+        logger.info("Creating tables ...")
+        val schema = getClass.getResourceAsStream("schema.sql")
+        val lines = Source.fromInputStream(schema, "UTF-8").getLines.toArray
+        val sources = lines.map(_.split("--")).filter(_.nonEmpty).map(_.head.trim).mkString("\n")
+        val statements = sources.split(";\n").map(_.trim()).filter(_.nonEmpty)
+        withTx { implicit session =>
+          statements.foreach(sql => session.execute(sql))
+        } match {
+          case Success(_) =>
+            logger.info("Successfully imported schema")
+          case Failure(e) =>
+            throw new RuntimeException("Error while importing schema", e)
+        }
+      }
+    case Failure(e) =>
+      throw new RuntimeException("Could not list tables in the database", e)
+  }
 
   lazy val service: Service = Service.findByName("benchmark").get
   lazy val serviceId: Int = service.id.get
@@ -33,50 +67,50 @@ object S2GraphDatabase {
   lazy val column: ServiceColumn = ServiceColumn.find(serviceId, "item_id").get
   lazy val columnId: Int = column.id.get
 
-//  val hbaseExecutor = {
-//    val executor = Executors.newSingleThreadExecutor()
-//
-//    Runtime.getRuntime.addShutdownHook(new Thread() {
-//      override def run(): Unit = {
-//        executor.shutdown()
-//      }
-//    })
-//
-//    val hbaseAvailable = try {
-//      val config = ConfigFactory.load()
-//      val (host, port) = config.getString("hbase.zookeeper.quorum").split(":") match {
-//        case Array(h, p) => (h, p.toInt)
-//        case Array(h) => (h, 2181)
-//      }
-//
-//      val socket = new Socket(host, port)
-//      socket.close()
-//      true
-//    } catch {
-//      case e: IOException => false
-//    }
-//
-//    if (!hbaseAvailable) {
-//      // start HBase
-//      executor.submit(new Runnable {
-//        override def run(): Unit = {
-//          val cwd = new File(".").getAbsolutePath
-//
-//          System.setProperty("proc_master", "")
-//          System.setProperty("hbase.log.dir", s"$cwd/storage/s2graph/hbase/")
-//          System.setProperty("hbase.log.file", s"$cwd/storage/s2graph/hbase.log")
-//          System.setProperty("hbase.tmp.dir", s"$cwd/storage/s2graph/hbase/")
-//          System.setProperty("hbase.home.dir", "")
-//          System.setProperty("hbase.id.str", "s2graph")
-//          System.setProperty("hbase.root.logger", "INFO,RFA")
-//
-//          org.apache.hadoop.hbase.master.HMaster.main(Array[String]("start"))
-//        }
-//      })
-//    }
-//
-//    executor
-//  }
+  lazy val hbaseExecutor = {
+    val executor = Executors.newSingleThreadExecutor()
+
+    Runtime.getRuntime.addShutdownHook(new Thread() {
+      override def run(): Unit = {
+        executor.shutdown()
+      }
+    })
+
+    val hbaseAvailable = try {
+      val config = ConfigFactory.load()
+      val (host, port) = config.getString("hbase.zookeeper.quorum").split(":") match {
+        case Array(h, p) => (h, p.toInt)
+        case Array(h) => (h, 2181)
+      }
+
+      val socket = new Socket(host, port)
+      socket.close()
+      true
+    } catch {
+      case e: IOException => false
+    }
+
+    if (!hbaseAvailable) {
+      // start HBase
+      executor.submit(new Runnable {
+        override def run(): Unit = {
+          val cwd = new File(".").getAbsolutePath
+
+          System.setProperty("proc_master", "")
+          System.setProperty("hbase.log.dir", s"$cwd/storage/s2graph/hbase/")
+          System.setProperty("hbase.log.file", s"$cwd/storage/s2graph/hbase.log")
+          System.setProperty("hbase.tmp.dir", s"$cwd/storage/s2graph/hbase/")
+          System.setProperty("hbase.home.dir", "")
+          System.setProperty("hbase.id.str", "s2graph")
+          System.setProperty("hbase.root.logger", "INFO,RFA")
+
+          org.apache.hadoop.hbase.master.HMaster.main(Array[String]("start"))
+        }
+      })
+    }
+
+    executor
+  }
 }
 
 class S2GraphDatabase(config: Config, dbStorageDirectory: File)
@@ -92,27 +126,28 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
 
     if (s2 != null) return
 
-    // wait until the port 16010 is up
-//    breakable {
-//
-//      while (true) {
-//        logger.info(s"hbaseExecutor.isShutdown = ${hbaseExecutor.isShutdown}")
-//        val available = try {
-//          val socket = new Socket("localhost", 16010)
-//          socket.close()
-//          true
-//        } catch {
-//          case e: Throwable =>
-//            logger.info("retrying port 16010", e)
-//            false
-//        }
-//        if (available) {
-//          break
-//        }
-//      }
-//    }
+    // if hbase, wait until the port 16010 is up
+    if (config.getString("s2graph.storage.backend") == "hbase") {
+      logger.info(s"hbaseExecutor.isShutdown = ${hbaseExecutor.isShutdown}")
+      breakable {
+        while (true) {
+          val available = try {
+            val socket = new Socket("localhost", 16010)
+            socket.close()
+            true
+          } catch {
+            case e: ConnectException =>
+              logger.info("retrying port 16010")
+              Thread.sleep(1000)
+              false
+          }
+          if (available) {
+            break
+          }
+        }
+      }
+    }
 
-    val config = ConfigFactory.load()
     s2 = new Graph(config)
     mgmt = new Management(s2)
 
@@ -154,7 +189,7 @@ class S2GraphDatabase(config: Config, dbStorageDirectory: File)
   override def createGraphForSingleLoad(): Unit = open()
   override def createGraphForMassiveLoad(): Unit = open()
 
-  override def shutdown(): Unit = {} // s2.shutdown()
+  override def shutdown(): Unit = s2.defaultStorage.flush() // s2.flushStorage() // s2.shutdown()
   override def shutdownMassiveGraph(): Unit = shutdown()
 
 

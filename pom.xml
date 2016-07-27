@@ -51,7 +51,7 @@
 
     <properties>
         <s2graph.version>0.13.0</s2graph.version>
-        <blueprints.version>2.6.0</blueprints.version>
+        <tinkerpop.version>3.0.1-incubating</tinkerpop.version>
         <orientdb.version>2.2.5</orientdb.version>
         <titan.version>1.0.0</titan.version>
         <hbase.version>1.0.1</hbase.version>
@@ -74,6 +74,11 @@
                     <artifactId>logback-classic</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.192</version>
         </dependency>
         <dependency>
             <groupId>com.stumbleupon</groupId>
@@ -104,7 +109,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>16.0.1</version>
+            <version>14.0.1</version>
         </dependency>
         <dependency>
             <groupId>colt</groupId>
@@ -152,14 +157,9 @@
             <version>1.1.1</version>
         </dependency>
         <dependency>
-            <groupId>com.tinkerpop.gremlin</groupId>
-            <artifactId>gremlin-groovy</artifactId>
-            <version>${blueprints.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.tinkerpop.gremlin</groupId>
-            <artifactId>gremlin-java</artifactId>
-            <version>${blueprints.version}</version>
+            <groupId>org.apache.tinkerpop</groupId>
+            <artifactId>gremlin-core</artifactId>
+            <version>${tinkerpop.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.stephenc.high-scale-lib</groupId>
@@ -190,11 +190,6 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-graphdb</artifactId>
             <version>${orientdb.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.tinkerpop</groupId>
-            <artifactId>pipes</artifactId>
-            <version>${blueprints.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -258,11 +253,6 @@
             <groupId>com.sparsity</groupId>
             <artifactId>sparkseejava</artifactId>
             <version>5.0.0</version>
-        </dependency>
-        <dependency>
-           <groupId>com.tinkerpop.blueprints</groupId>
-           <artifactId>blueprints-sparksee-graph</artifactId>
-           <version>${blueprints.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
