@@ -46,6 +46,7 @@ public class BenchmarkConfiguration
     private static final String DATABASE_STORAGE_DIRECTORY = "database-storage-directory";
     private static final String ACTUAL_COMMUNITIES = "actual-communities";
     private static final String NODES_COUNT = "nodes-count";
+    private static final String REPETITIONS = "repetitions";
     private static final String RANDOMIZE_CLUSTERING = "randomize-clustering";
     private static final String CACHE_VALUES = "cache-values";
     private static final String CACHE_INCREMENT_FACTOR = "cache-increment-factor";
@@ -83,6 +84,7 @@ public class BenchmarkConfiguration
     // clustering
     private final Boolean randomizedClustering;
     private final Integer nodesCount;
+    private final Integer repetitions;
     private final Integer cacheValuesCount;
     private final Double cacheIncrementFactor;
     private final List<Integer> cacheValues;
@@ -183,6 +185,8 @@ public class BenchmarkConfiguration
             nodesCount = null;
         }
 
+        repetitions = socialsensor.getInt(REPETITIONS);
+
         if (this.benchmarkTypes.contains(BenchmarkType.CLUSTERING))
         {
             if (!socialsensor.containsKey(RANDOMIZE_CLUSTERING))
@@ -276,6 +280,11 @@ public class BenchmarkConfiguration
     public Integer getNodesCount()
     {
         return nodesCount;
+    }
+
+    public Integer getRepetitions()
+    {
+        return repetitions;
     }
 
     public Integer getCacheValuesCount()
