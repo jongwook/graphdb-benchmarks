@@ -46,7 +46,6 @@ public class TitanMassiveInsertion extends InsertionBase<TitanVertex>
             final long titanVertexId = TitanId.toVertexId(intValue);
             v = titanGraph.addVertex();
             v.property("nodeId", intValue);
-            titanGraph.tx().commit();
         }
         return v;
     }
@@ -54,14 +53,11 @@ public class TitanMassiveInsertion extends InsertionBase<TitanVertex>
     @Override
     public void relateNodes(TitanVertex src, TitanVertex dest)
     {
-        try
-        {
-            src.addEdge("similar", dest);
-            titanGraph.tx().commit();
-        }
-        catch (Exception e)
-        {
-            titanGraph.tx().rollback(); //TODO(amcp) why can this happen? doesn't this indicate illegal state?
-        }
+        src.addEdge("similar", dest);
+    }
+
+    @Override
+    protected void post() {
+        titanGraph.tx().commit();
     }
 }

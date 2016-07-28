@@ -18,12 +18,14 @@ import java.util.concurrent.TimeUnit;
 public class FindNeighboursOfNeighboursBenchmark extends PermutingBenchmarkBase implements RequiresGraphData
 {
     private final int nodesCount;
+    private final int repetitions;
 
     public FindNeighboursOfNeighboursBenchmark(BenchmarkConfiguration config)
     {
         super(config, BenchmarkType.FIND_NEIGHBOURS_OF_NEIGHBOURS);
 
         nodesCount = config.getNodesCount();
+        repetitions = config.getRepetitions();
     }
 
     @Override
@@ -31,7 +33,7 @@ public class FindNeighboursOfNeighboursBenchmark extends PermutingBenchmarkBase 
     {
         GraphDatabase<?, ?, ?, ?> graphDatabase = Utils.createDatabaseInstance(bench, type);
         graphDatabase.open();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < repetitions; i++) {
             Stopwatch watch = new Stopwatch();
             watch.start();
             long total = graphDatabase.findAllNeighboursOfNeighboursOfTheFirstFewNodes(nodesCount);

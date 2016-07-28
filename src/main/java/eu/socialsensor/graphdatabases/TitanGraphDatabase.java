@@ -7,6 +7,8 @@ import com.thinkaurelius.titan.core.attribute.Cmp;
 import com.thinkaurelius.titan.core.schema.TitanManagement;
 import com.thinkaurelius.titan.core.util.TitanCleanup;
 import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import eu.socialsensor.insert.Insertion;
 import eu.socialsensor.insert.TitanMassiveInsertion;
 import eu.socialsensor.insert.TitanSingleInsertion;
@@ -21,7 +23,10 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 
 import java.io.File;
 import java.io.IOError;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
+import java.net.Socket;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -83,11 +88,35 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<TitanVertex>,
         conf.addProperty(GraphDatabaseConfiguration.ALLOW_SETTING_VERTEX_ID.getName(), "true");
 
         // storage NS config. FYI, storage.idauthority-wait-time is 300ms
+        String zookeeper = ConfigFactory.load().getString("hbase.zookeeper.quorum").split(":")[0];
         storage.addProperty(GraphDatabaseConfiguration.STORAGE_BACKEND.getName(), type.getBackend());
+        storage.addProperty(GraphDatabaseConfiguration.STORAGE_HOSTS.getName(), zookeeper);
         storage.addProperty(GraphDatabaseConfiguration.STORAGE_DIRECTORY.getName(), dbPath.getAbsolutePath());
         storage.addProperty(GraphDatabaseConfiguration.STORAGE_BATCH.getName(), batchLoading);
         storage.addProperty(GraphDatabaseConfiguration.BUFFER_SIZE.getName(), bench.getTitanBufferSize());
         storage.addProperty(GraphDatabaseConfiguration.PAGE_SIZE.getName(), bench.getTitanPageSize());
+
+        if (type.getBackend().equals("hbase")) {
+            System.err.println("hbaseExecutor.isShutDown(): " + S2GraphDatabase$.MODULE$.hbaseExecutor().isShutdown());
+            try {
+                Socket socket = new Socket(zookeeper, 2181);
+                socket.close();
+            } catch (IOException e) {
+                while (true) {
+                    try {
+                        Socket socket = new Socket("localhost", 16010);
+                        socket.close();
+                        break;
+                    } catch (IOException e2) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e3) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+        }
 
         // ids NS config
         ids.addProperty(GraphDatabaseConfiguration.IDS_BLOCK_SIZE.getName(), bench.getTitanIdsBlocksize());
@@ -126,7 +155,8 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<TitanVertex>,
             // throws: Unknown configuration element in namespace
             // [root.storage]: cassandra-config-dir
             storage.addProperty("cassandra-config-dir", "configuration/cassandra.yaml");
-            storage.addProperty("transactions", Boolean.toString(batchLoading));
+            storage.addProperty("transactions", Boolean.toString(!batchLoading));
+            storage.addProperty("batch-loading", Boolean.toString(batchLoading));
         }
         else if (GraphDatabaseType.TITAN_DYNAMODB == type)
         {
