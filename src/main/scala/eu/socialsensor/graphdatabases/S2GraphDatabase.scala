@@ -127,7 +127,7 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
     if (s2 != null) return
 
     // if hbase, wait until the port 16010 is up
-    if (config.getString("s2graph.storage.backend") == "hbase") {
+    if (config.getString("s2graph.storage.backend") == "hbase" && config.getString("hbase.zookeeper.quorum").split(":").head == "localhost") {
       logger.info(s"hbaseExecutor.isShutdown = ${hbaseExecutor.isShutdown}")
       breakable {
         while (true) {
