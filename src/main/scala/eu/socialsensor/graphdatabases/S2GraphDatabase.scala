@@ -67,50 +67,50 @@ object S2GraphDatabase {
   lazy val column: ServiceColumn = ServiceColumn.find(serviceId, "item_id").get
   lazy val columnId: Int = column.id.get
 
-//  lazy val hbaseExecutor = {
-//    val executor = Executors.newSingleThreadExecutor()
-//
-//    Runtime.getRuntime.addShutdownHook(new Thread() {
-//      override def run(): Unit = {
-//        executor.shutdown()
-//      }
-//    })
-//
-//    val hbaseAvailable = try {
-//      val config = ConfigFactory.load()
-//      val (host, port) = config.getString("hbase.zookeeper.quorum").split(":") match {
-//        case Array(h, p) => (h, p.toInt)
-//        case Array(h) => (h, 2181)
-//      }
-//
-//      val socket = new Socket(host, port)
-//      socket.close()
-//      true
-//    } catch {
-//      case e: IOException => false
-//    }
-//
-//    if (!hbaseAvailable) {
-//      // start HBase
-//      executor.submit(new Runnable {
-//        override def run(): Unit = {
-//          val cwd = new File(".").getAbsolutePath
-//
-//          System.setProperty("proc_master", "")
-//          System.setProperty("hbase.log.dir", s"$cwd/storage/s2graph/hbase/")
-//          System.setProperty("hbase.log.file", s"$cwd/storage/s2graph/hbase.log")
-//          System.setProperty("hbase.tmp.dir", s"$cwd/storage/s2graph/hbase/")
-//          System.setProperty("hbase.home.dir", "")
-//          System.setProperty("hbase.id.str", "s2graph")
-//          System.setProperty("hbase.root.logger", "INFO,RFA")
-//
-//          org.apache.hadoop.hbase.master.HMaster.main(Array[String]("start"))
-//        }
-//      })
-//    }
-//
-//    executor
-//  }
+  lazy val hbaseExecutor = {
+    val executor = Executors.newSingleThreadExecutor()
+
+    Runtime.getRuntime.addShutdownHook(new Thread() {
+      override def run(): Unit = {
+        executor.shutdown()
+      }
+    })
+
+    val hbaseAvailable = try {
+      val config = ConfigFactory.load()
+      val (host, port) = config.getString("hbase.zookeeper.quorum").split(":") match {
+        case Array(h, p) => (h, p.toInt)
+        case Array(h) => (h, 2181)
+      }
+
+      val socket = new Socket(host, port)
+      socket.close()
+      true
+    } catch {
+      case e: IOException => false
+    }
+
+    if (!hbaseAvailable) {
+      // start HBase
+      executor.submit(new Runnable {
+        override def run(): Unit = {
+          val cwd = new File(".").getAbsolutePath
+
+          System.setProperty("proc_master", "")
+          System.setProperty("hbase.log.dir", s"$cwd/storage/s2graph/hbase/")
+          System.setProperty("hbase.log.file", s"$cwd/storage/s2graph/hbase.log")
+          System.setProperty("hbase.tmp.dir", s"$cwd/storage/s2graph/hbase/")
+          System.setProperty("hbase.home.dir", "")
+          System.setProperty("hbase.id.str", "s2graph")
+          System.setProperty("hbase.root.logger", "INFO,RFA")
+
+          org.apache.hadoop.hbase.master.HMaster.main(Array[String]("start"))
+        }
+      })
+    }
+
+    executor
+  }
 }
 
 class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirectory: File)
@@ -128,7 +128,7 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
 
     // if hbase, wait until the port 16010 is up
     if (config.getString("s2graph.storage.backend") == "hbase" && config.getString("hbase.zookeeper.quorum").split(":").head == "localhost") {
-//      logger.info(s"hbaseExecutor.isShutdown = ${hbaseExecutor.isShutdown}")
+      logger.info(s"hbaseExecutor.isShutdown = ${hbaseExecutor.isShutdown}")
       breakable {
         while (true) {
           val available = try {
