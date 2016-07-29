@@ -28,16 +28,14 @@ class S2GraphSingleInsertion(backend: GraphDatabaseType, graph: Graph, resultsPa
 
   override protected def relateNodes(src: Vertex, dest: Vertex): Unit = {
     val ts = System.currentTimeMillis()
-    val edges = Seq(
-      Edge(
-        src, dest, label, GraphUtil.directions("out"),
-        propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
-        op = GraphUtil.operations("insert")
-      )
+    val edge = Edge(
+      src, dest, label, GraphUtil.directions("out"),
+      propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
+      op = GraphUtil.operations("insert")
     )
 
     waiting.incrementAndGet()
-    graph.mutateEdges(edges).foreach {
+    graph.mutateEdges(Seq(edge)).foreach {
       _ => waiting.decrementAndGet()
     }
   }
