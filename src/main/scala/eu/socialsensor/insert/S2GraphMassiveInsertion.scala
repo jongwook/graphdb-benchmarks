@@ -17,7 +17,6 @@ class S2GraphMassiveInsertion(backend: GraphDatabaseType, graph: Graph) extends 
 
   val logger = LoggerFactory.getLogger(getClass)
   val waiting = new AtomicInteger()
-  val buffer = new ArrayBuffer[Edge]()
   val BatchSize = 10000
 
   override protected def getOrCreate(value: String): Vertex = {
@@ -51,13 +50,6 @@ class S2GraphMassiveInsertion(backend: GraphDatabaseType, graph: Graph) extends 
   }
 
   override protected def post(): Unit = {
-    if (buffer.size != 0) {
-      waiting.incrementAndGet()
-      graph.mutateEdges(buffer, withWait = true).foreach { _ =>
-        buffer.clear()
-        waiting.decrementAndGet()
-      }
-    }
     while (waiting.get() > 0) {
       logger.info(s"#waiting = ${waiting.get()}")
       Thread.sleep(100)
