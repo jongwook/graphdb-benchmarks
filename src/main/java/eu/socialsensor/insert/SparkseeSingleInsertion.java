@@ -36,7 +36,6 @@ public class SparkseeSingleInsertion extends InsertionBase<Long>
     {
         session.begin();
         sparkseeGraph.newEdge(SparkseeGraphDatabase.EDGE_TYPE, src, dest);
-        sparkseeGraph.newEdge(SparkseeGraphDatabase.EDGE_TYPE, dest, src);
         session.commit();
     }
 

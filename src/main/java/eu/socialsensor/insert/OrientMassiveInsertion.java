@@ -65,7 +65,6 @@ public class OrientMassiveInsertion extends InsertionBase<Vertex> implements Ins
     protected void relateNodes(Vertex src, Vertex dest)
     {
         orientGraph.addEdge(null, src, dest, "similar");
-        orientGraph.addEdge(null, dest, src, "similar");
         edges++;
         if (edges % 1000 == 0) {
             orientGraph.commit();

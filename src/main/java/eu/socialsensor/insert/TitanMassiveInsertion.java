@@ -50,7 +50,6 @@ public class TitanMassiveInsertion extends InsertionBase<TitanVertex>
     public void relateNodes(TitanVertex src, TitanVertex dest)
     {
         src.addEdge("similar", dest);
-        dest.addEdge("similar", src);
     }
 
     @Override

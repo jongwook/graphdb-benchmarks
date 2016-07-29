@@ -34,11 +34,6 @@ class S2GraphMassiveInsertion(backend: GraphDatabaseType, graph: Graph) extends 
         src, dest, label, GraphUtil.directions("out"),
         propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
         op = GraphUtil.operations("insertBulk")
-      ),
-      Edge(
-        src, dest, label, GraphUtil.directions("out"),
-        propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
-        op = GraphUtil.operations("insertBulk")
       )
     )
 

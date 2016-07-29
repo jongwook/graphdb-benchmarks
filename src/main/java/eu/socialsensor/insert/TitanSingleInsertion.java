@@ -52,7 +52,6 @@ public class TitanSingleInsertion extends InsertionBase<TitanVertex>
         try
         {
             src.addEdge("similar", dest);
-            dest.addEdge("similar", src);
             titanGraph.tx().commit();
         }
         catch (Exception e)

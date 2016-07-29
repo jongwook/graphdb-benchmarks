@@ -33,11 +33,6 @@ class S2GraphSingleInsertion(backend: GraphDatabaseType, graph: Graph, resultsPa
         src, dest, label, GraphUtil.directions("out"),
         propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
         op = GraphUtil.operations("insert")
-      ),
-      Edge(
-        src, dest, label, GraphUtil.directions("out"),
-        propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
-        op = GraphUtil.operations("insert")
       )
     )
 

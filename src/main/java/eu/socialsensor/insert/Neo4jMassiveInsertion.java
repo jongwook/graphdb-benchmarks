@@ -43,6 +43,5 @@ public final class Neo4jMassiveInsertion extends InsertionBase<Long>
     protected void relateNodes(Long src, Long dest)
     {
         inserter.createRelationship(src, dest, Neo4jGraphDatabase.RelTypes.SIMILAR, null);
-        inserter.createRelationship(dest, src, Neo4jGraphDatabase.RelTypes.SIMILAR, null);
     }
 }
