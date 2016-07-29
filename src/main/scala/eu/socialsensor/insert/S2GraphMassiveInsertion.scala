@@ -30,7 +30,7 @@ class S2GraphMassiveInsertion(backend: GraphDatabaseType, graph: Graph) extends 
     val ts = System.currentTimeMillis()
     val edges = Seq(
         Edge(
-        src, dest, label, GraphUtil.directions("in"),
+        dest, src, label, GraphUtil.directions("out"),
         propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
         op = GraphUtil.operations("insertBulk")
       ),
