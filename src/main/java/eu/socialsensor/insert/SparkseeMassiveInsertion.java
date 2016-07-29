@@ -32,6 +32,7 @@ public class SparkseeMassiveInsertion extends InsertionBase<Long> implements Ins
     public void relateNodes(Long src, Long dest)
     {
         sparkseeGraph.newEdge(SparkseeGraphDatabase.EDGE_TYPE, src, dest);
+        sparkseeGraph.newEdge(SparkseeGraphDatabase.EDGE_TYPE, dest, src);
         operations++;
         if (operations == 10000)
         {

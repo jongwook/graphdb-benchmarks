@@ -70,6 +70,7 @@ public class Neo4jSingleInsertion extends InsertionBase<Node>
             try
             {
                 src.createRelationshipTo(dest, Neo4jGraphDatabase.RelTypes.SIMILAR);
+                dest.createRelationshipTo(src, Neo4jGraphDatabase.RelTypes.SIMILAR);
                 tx.success();
             }
             catch (Exception e)

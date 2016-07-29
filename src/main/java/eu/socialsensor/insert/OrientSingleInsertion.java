@@ -33,6 +33,7 @@ public final class OrientSingleInsertion extends InsertionBase<Vertex>
     protected void relateNodes(Vertex src, Vertex dest)
     {
         orientGraph.addEdge(null, src, dest, "similar");
+        orientGraph.addEdge(null, dest, src, "similar");
 
         if (orientGraph instanceof TransactionalGraph)
         {
