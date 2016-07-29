@@ -118,6 +118,9 @@ public abstract class InsertionBase<T> implements Insertion
                 thousandWatch.stop();
                 thousandWatch = new Stopwatch();
                 thousandWatch.start();
+                if (i % 10000 == 0) {
+                    System.err.println("Processed " + i + " rows");
+                }
             }
             i++;
         }
