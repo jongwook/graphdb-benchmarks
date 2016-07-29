@@ -34,7 +34,7 @@ class S2GraphMassiveInsertion(backend: GraphDatabaseType, graph: Graph) extends 
       op = GraphUtil.operations("insertBulk")
     )
     waiting.incrementAndGet()
-    graph.mutateEdges(Seq(edge), withWait = false).foreach {
+    graph.mutateEdges(Seq(edge), withWait = true).foreach {
       _ => waiting.decrementAndGet()
     }
   }

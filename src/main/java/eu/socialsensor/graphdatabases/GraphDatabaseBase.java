@@ -161,7 +161,6 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
                         ctxt.stop();
                     }
                 }
-
                 total += dests.size();
                 this.cleanupEdgeIterator(edgeNeighborIterator);
             }

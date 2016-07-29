@@ -114,7 +114,7 @@ public abstract class InsertionBase<T> implements Insertion
                 contextRelate.stop();
             }
 
-            if (i % 1000 == 0)
+            if (i % 10000 == 0)
             {
                 insertionTimes.add((double) thousandWatch.elapsed(TimeUnit.MILLISECONDS));
                 thousandWatch.stop();

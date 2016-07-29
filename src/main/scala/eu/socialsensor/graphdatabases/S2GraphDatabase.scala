@@ -215,7 +215,7 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
         ))
       ))
     ))
-    val result = Await.result(future, 5.seconds)
+    val result = Await.result(future, 60.seconds)
     result.edgeWithScores.map(_.edge).iterator
   }
 
@@ -248,9 +248,9 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
       if (vertex != null) {
         val qp = S2QueryParam(
           labelName = labelName,
-          direction = "in",
+          direction = "out",
           limit = Int.MaxValue,
-          rpcTimeout = 100000
+          rpcTimeout = 100000000
         )
 
         val future = s2.getEdges(S2Query(
@@ -265,9 +265,10 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
             )
           )
         ))
-        val result = Await.result(future, 10.seconds)
-
-        result.edgeWithScores.map(_.edge.tgtId).toSet.size
+        val result = Await.result(future, 60.minutes)
+        val count = result.edgeWithScores.map(_.edge.tgtId).toSet.size
+        
+        count
       } else {
         0L
       }

@@ -543,7 +543,7 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<TitanVertex>,
     @Override
     public Iterator<Edge> getNeighborsOfVertex(TitanVertex v)
     {
-        return v.edges(Direction.BOTH, SIMILAR);
+        return v.edges(Direction.OUT, SIMILAR);
     }
 
     @Override
