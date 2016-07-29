@@ -121,6 +121,10 @@ public abstract class InsertionBase<T> implements Insertion
                 if (i % 10000 == 0) {
                     System.err.println("Processed " + i + " rows");
                 }
+
+                if (getClass().getSimpleName().startsWith("S2")) {
+                    post();
+                }
             }
             i++;
         }

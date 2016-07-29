@@ -42,7 +42,7 @@ class S2GraphMassiveInsertion(backend: GraphDatabaseType, graph: Graph) extends 
   override protected def post(): Unit = {
     while (waiting.get() > 0) {
       logger.info(s"#waiting = ${waiting.get()}")
-      Thread.sleep(1000)
+      Thread.sleep(100)
     }
   }
 }
