@@ -27,7 +27,7 @@ import java.util.Map;
 public class TitanMassiveInsertion extends InsertionBase<TitanVertex>
 {
     private final StandardTitanGraph titanGraph;
-    private final Map<String, TitanVertex> vertexCache = new HashMap<String, TitanVertex>();
+    private final Map<Integer, TitanVertex> vertexCache = new HashMap<>();
 
     public TitanMassiveInsertion(TitanGraph titanGraph, GraphDatabaseType type)
     {
@@ -39,22 +39,14 @@ public class TitanMassiveInsertion extends InsertionBase<TitanVertex>
     public TitanVertex getOrCreate(String value)
     {
         final TitanVertex v;
-        if (vertexCache.containsKey(value)) {
-            v = vertexCache.get(value);
-        } else {
-            Integer intValue = Integer.valueOf(value) + 1;
+        Integer intValue = Integer.valueOf(value) + 1;
 
-            if (titanGraph.query().has("nodeId", Cmp.EQUAL, intValue).vertices().iterator().hasNext())
-            {
-                v = (TitanVertex) titanGraph.query().has("nodeId", Cmp.EQUAL, intValue).vertices().iterator().next();
-            }
-            else
-            {
-                final long titanVertexId = TitanId.toVertexId(intValue);
-                v = titanGraph.addVertex();
-                v.property("nodeId", intValue);
-            }
-            vertexCache.put(value, v);
+        if (vertexCache.containsKey(intValue)) {
+            v = vertexCache.get(intValue);
+        } else {
+            v = titanGraph.addVertex();
+            v.property("nodeId", intValue);
+            vertexCache.put(intValue, v);
         }
 
         return v;
