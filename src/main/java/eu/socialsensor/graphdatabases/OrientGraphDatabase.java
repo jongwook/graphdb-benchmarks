@@ -427,7 +427,7 @@ public class OrientGraphDatabase extends GraphDatabaseBase<Iterator<Vertex>, Ite
     @Override
     public Iterator<Edge> getNeighborsOfVertex(Vertex v)
     {
-        return v.getEdges(Direction.OUT, SIMILAR).iterator();
+        return v.getEdges(Direction.BOTH, SIMILAR).iterator();
     }
 
     @Override
