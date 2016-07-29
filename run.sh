@@ -11,6 +11,6 @@ if [ $JAVA_VER -lt 18 ]; then
 fi
 export JAVA_HOME
 
-export MAVEN_OPTS="-Xmx16g"
+export MAVEN_OPTS="-Xmx8g"
 rm -rf storage/*
 mvn -Pbench test
