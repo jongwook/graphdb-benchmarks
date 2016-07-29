@@ -1,4 +1,4 @@
-
+sh cleanup.sh
 JAVA_VER=$(java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q')
 
 if [ $JAVA_VER -lt 18 ]; then
