@@ -530,7 +530,7 @@ public class SparkseeGraphDatabase extends GraphDatabaseBase<ObjectsIterator, Ob
     public ObjectsIterator getNeighborsOfVertex(Long v)
     {
         final int edgeType = sparkseeGraph.findType(SIMILAR);
-        final Objects neighbors = sparkseeGraph.neighbors(v, edgeType, EdgesDirection.Any);
+        final Objects neighbors = sparkseeGraph.neighbors(v, edgeType, EdgesDirection.Outgoing);
         return neighbors.iterator();
     }
 

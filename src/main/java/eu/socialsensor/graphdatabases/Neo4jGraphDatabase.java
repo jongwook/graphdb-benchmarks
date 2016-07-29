@@ -714,7 +714,7 @@ public class Neo4jGraphDatabase extends GraphDatabaseBase<Iterator<Node>, Iterat
     @Override
     public Iterator<Relationship> getNeighborsOfVertex(Node v)
     {
-        return v.getRelationships(Neo4jGraphDatabase.RelTypes.SIMILAR, Direction.BOTH).iterator();
+        return v.getRelationships(Neo4jGraphDatabase.RelTypes.SIMILAR, Direction.OUTGOING).iterator();
     }
 
     @Override

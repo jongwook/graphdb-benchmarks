@@ -30,11 +30,6 @@ class S2GraphSingleInsertion(backend: GraphDatabaseType, graph: Graph, resultsPa
     val ts = System.currentTimeMillis()
     val edges = Seq(
       Edge(
-        src, dest, label, GraphUtil.directions("in"),
-        propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
-        op = GraphUtil.operations("insert")
-      ),
-      Edge(
         src, dest, label, GraphUtil.directions("out"),
         propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
         op = GraphUtil.operations("insert")

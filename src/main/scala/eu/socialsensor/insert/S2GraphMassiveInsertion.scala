@@ -29,11 +29,6 @@ class S2GraphMassiveInsertion(backend: GraphDatabaseType, graph: Graph) extends 
   override protected def relateNodes(src: Vertex, dest: Vertex): Unit = {
     val ts = System.currentTimeMillis()
     val edges = Seq(
-        Edge(
-        src, dest, label, GraphUtil.directions("in"),
-        propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
-        op = GraphUtil.operations("insertBulk")
-      ),
       Edge(
         src, dest, label, GraphUtil.directions("out"),
         propsWithTs = Map(LabelMeta.timestamp -> InnerValLikeWithTs.withLong(ts, ts, column.schemaVersion)),
