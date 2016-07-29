@@ -163,7 +163,6 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<TitanVertex>,
         }
         else if (GraphDatabaseType.TITAN_HBASE == type)
         {
-            storage.setProperty("hostname", "aa-hadoop-rm3.dakao.io:2181,aa-hadoop-rm1.dakao.io:2181,aa-hadoop-nn2.dakao.io:2181,aa-hadoop-rm2.dakao.io:2181,aa-hadoop-nn1.dakao.io:2181");
             storage.setProperty("hbase.region-count", 5);
         }
         return TitanFactory.open(conf);
