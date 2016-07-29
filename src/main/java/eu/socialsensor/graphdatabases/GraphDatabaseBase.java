@@ -163,7 +163,7 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
                 total += dests.size();
                 if (i % 10 == 0) {
                     StringBuilder sb = new StringBuilder();
-                    sb.append("vertex ").append(i).append(" : size = ").append(dests.size()).append(dests.size());
+                    sb.append("vertex ").append(i).append(" : size = ").append(dests.size());
                     System.err.println(sb.toString());
                 }
 
