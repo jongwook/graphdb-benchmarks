@@ -125,7 +125,7 @@ public abstract class InsertionBase<T> implements Insertion
                 }
 
                 if (getClass().getSimpleName().startsWith("S2")) {
-                    post();
+//                    post();
                 }
             }
             i++;

@@ -1,9 +1,7 @@
 package eu.socialsensor.graphdatabases;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
@@ -118,6 +116,8 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
         }
         try {
             for (int i = 0; i < n; i++) {
+                Set<Integer> others = new HashSet<>();
+                Map<Integer, List<Integer>> agg = new HashMap<>();
                 VertexType vertex;
                 Timer.Context ctxt = nextVertexTimes.time();
                 try {
@@ -140,6 +140,7 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
                 }
                 while(edgeIteratorHasNext(edgeNeighborIterator)) {
                     EdgeType edge;
+
                     ctxt = nextEdgeTimes.time();
                     try {
                         edge = nextEdge(edgeNeighborIterator);
@@ -151,16 +152,33 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
                     ctxt = getOtherVertexFromEdgeTimes.time();
                     try {
                         other = getOtherVertexFromEdge(edge, vertex);
+                        int otherId = getVertexId(other);
+                        others.add(otherId);
+                        List<Integer> subAgg;
+                        if (agg.containsKey(otherId)) {
+                            subAgg = agg.get(otherId);
+                        } else {
+                            subAgg = new ArrayList<>();
+                        }
                         EdgeIteratorType neighborOfNeighbor = this.getNeighborsOfVertex(other);
                         while (edgeIteratorHasNext(neighborOfNeighbor)) {
                             edge = nextEdge(neighborOfNeighbor);
                             VertexType dest = getDestVertexFromEdge(edge);
+                            subAgg.add(getVertexId(dest));
+                            agg.put(otherId, subAgg);
                             dests.add(getVertexId(dest));
                         }
                     } finally {
                         ctxt.stop();
                     }
                 }
+//                for (Integer otherId :  others) {
+//                    System.out.println("[1Step]: " + otherId);
+//                }
+//                for (Map.Entry<Integer, List<Integer>> kv : agg.entrySet()) {
+//                    Set<Integer> s = new HashSet<>(kv.getValue());
+//                    System.out.println("[2Step]: " + kv.getKey() + " -> " +  s);
+//                }
                 total += dests.size();
                 this.cleanupEdgeIterator(edgeNeighborIterator);
             }

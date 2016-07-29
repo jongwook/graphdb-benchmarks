@@ -12,10 +12,11 @@ import eu.socialsensor.graphdatabases.S2GraphDatabase._
 import eu.socialsensor.insert.{S2GraphMassiveInsertion, S2GraphSingleInsertion}
 import eu.socialsensor.main.GraphDatabaseType
 import org.apache.s2graph.core._
-import org.apache.s2graph.core.mysqls.{Model, Label, Service, ServiceColumn}
-import org.apache.s2graph.core.types.{InnerVal, VertexId, LabelWithDirection}
+import org.apache.s2graph.core.mysqls._
+import org.apache.s2graph.core.types.{InnerValLikeWithTs, InnerVal, VertexId, LabelWithDirection}
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 import scala.io.Source
@@ -207,7 +208,7 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
   // OLTP-style queries
   override def getNeighborsOfVertex(v: Vertex): Iterator[Edge] = {
     val future = s2.getEdges(S2Query(
-      queryOption = QueryOption(withScore = false, returnDegree = false),
+      queryOption = QueryOption(removeCycle = true, withScore = false, returnDegree = false),
       vertices = Seq(v),
       steps = IndexedSeq(Step(
         List(S2QueryParam(
@@ -233,6 +234,12 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
   }
 
   override def findAllNeighboursOfNeighboursOfTheFirstFewNodes(n: Int): Long = {
+    val qp = S2QueryParam(
+      labelName = labelName,
+      direction = "out",
+      limit = Int.MaxValue - 1,
+      rpcTimeout = 100000000
+    )
     val counts = for (src <- 0 until n) yield {
       val ctxt: Timer.Context = nextVertexTimes.time
       val vertex = try {
@@ -245,35 +252,56 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
         ctxt.stop
       }
 
-      if (vertex != null) {
-        val qp = S2QueryParam(
-          labelName = labelName,
-          direction = "out",
-          limit = Int.MaxValue,
-          rpcTimeout = 100000000
-        )
+      val dests = scala.collection.mutable.Set.empty[Any]
+      val others = scala.collection.mutable.Set.empty[Any]
+      val agg = scala.collection.mutable.HashMap.empty[Any, scala.collection.mutable.ListBuffer[Any]]
 
-        val future = s2.getEdges(S2Query(
-          queryOption = QueryOption(withScore = false, returnDegree = false),
-          vertices = Seq(vertex),
-          steps = IndexedSeq(
-            Step(
-              List(qp)
-            ),
-            Step(
-              List(qp)
-            )
-          )
-        ))
+      val edge = Edge.toEdge(src, src, qp.labelName, qp.direction)
+      val edgeWithScore = EdgeWithScore(edge, 1.0, qp.label)
+      if (vertex != null) {
+       val queryRequests = Seq(QueryRequest(Query.empty, 0, vertex, qp))
+        val future = s2.getStorage(qp.label).fetches(queryRequests, Map(vertex.id -> Seq(edgeWithScore))).flatMap { stepResults =>
+          val secondStepQueryRequests = stepResults.head.edgeWithScores.map { edgeWithScore =>
+            others += edgeWithScore.edge.tgtId
+            QueryRequest(Query.empty, 1, edgeWithScore.edge.tgtVertex, qp)
+          }
+          val prevSteps = stepResults.head.edgeWithScores.groupBy(_.edge.tgtVertex.id)
+          s2.getStorage(qp.label).fetches(secondStepQueryRequests, prevSteps).map { stepResults =>
+            stepResults.foreach { stepResult =>
+              stepResult.edgeWithScores.foreach { edgeWithScore =>
+                dests += edgeWithScore.edge.tgtId
+                dests += edgeWithScore.edge.srcId
+              }
+            }
+          }
+        }
+//
+//        val future = s2.getEdges(S2Query(
+//          queryOption = QueryOption(withScore = false, returnDegree = false),
+//          vertices = Seq(vertex),
+//          steps = IndexedSeq(
+//            Step(
+//              List(qp)
+//            ),
+//            Step(
+//              List(qp)
+//            )
+//          )
+//        ))
         val result = Await.result(future, 60.minutes)
-        val count = result.edgeWithScores.map(_.edge.tgtId).toSet.size
-        
-        count
+//        println(s"[Start]: $src")
+//        others.toSeq.sortBy(_.toString.toInt).foreach { other => println(s"[1Step]: $other") }
+//        agg.toSeq.sortBy(_._1.toString.toInt).foreach { kv =>
+//          println(s"[2Step]: ${kv._1} -> ${kv._2.toSet}")
+//        }
+//        val neighborOfNeighbors = result.edgeWithScores.map(_.edge.tgtId).toSet
+//        neighborOfNeighbors.foreach { v => println(s"[Start]: ${vertex.innerIdVal}, [Dest]: $v") }
+//        dests ++= neighborOfNeighbors
+        dests.size
       } else {
         0L
       }
     }
-
     counts.sum
   }
 
