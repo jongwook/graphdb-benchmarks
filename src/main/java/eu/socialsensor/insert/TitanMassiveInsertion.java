@@ -7,15 +7,16 @@ import com.thinkaurelius.titan.core.util.TitanId;
 
 import com.thinkaurelius.titan.graphdb.database.StandardTitanGraph;
 import eu.socialsensor.main.GraphDatabaseType;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Implementation of massive Insertion in Titan graph database
- * 
+ *
  * @author sotbeis, sotbeis@iti.gr
  * @author Alexander Patrikalakis
- * 
+ *
  */
 public class TitanMassiveInsertion extends InsertionBase<TitanVertex>
 {
