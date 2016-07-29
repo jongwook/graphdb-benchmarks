@@ -7,13 +7,6 @@ import com.thinkaurelius.titan.core.util.TitanId;
 
 import com.thinkaurelius.titan.graphdb.database.StandardTitanGraph;
 import eu.socialsensor.main.GraphDatabaseType;
-import org.apache.tinkerpop.gremlin.process.computer.bulkloading.BulkLoader;
-import org.apache.tinkerpop.gremlin.process.computer.bulkloading.BulkLoaderVertexProgram;
-import org.apache.tinkerpop.gremlin.process.computer.bulkloading.IncrementalBulkLoader;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +20,7 @@ import java.util.Map;
 public class TitanMassiveInsertion extends InsertionBase<TitanVertex>
 {
     private final StandardTitanGraph titanGraph;
-    private final Map<String, TitanVertex> vertexCache = new HashMap<String, TitanVertex>();
+    private final Map<String, TitanVertex> vertexCache = new HashMap<>();
 
     public TitanMassiveInsertion(TitanGraph titanGraph, GraphDatabaseType type)
     {
@@ -54,6 +47,7 @@ public class TitanMassiveInsertion extends InsertionBase<TitanVertex>
                 v = titanGraph.addVertex();
                 v.property("nodeId", intValue);
             }
+            vertexCache.put(value, v);
         }
 
         return v;
