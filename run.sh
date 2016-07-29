@@ -1,4 +1,4 @@
-
+sh cleanup.sh
 JAVA_VER=$(java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q')
 
 if [ $JAVA_VER -lt 18 ]; then
@@ -11,6 +11,6 @@ if [ $JAVA_VER -lt 18 ]; then
 fi
 export JAVA_HOME
 
-export MAVEN_OPTS="-Xmx16g"
+export MAVEN_OPTS="-Xmx8g"
 rm -rf storage/*
 mvn -Pbench test

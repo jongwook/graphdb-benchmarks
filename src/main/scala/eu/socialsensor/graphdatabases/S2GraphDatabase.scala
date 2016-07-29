@@ -162,6 +162,7 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
       case Failure(e) => logger.warn(s"Did not create service: $e")
     }
 
+//    Management.deleteLabel("benchmark")
     mgmt.createLabel(
       label = "benchmark",
       srcServiceName = "benchmark",
@@ -183,7 +184,6 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
         logger.info(s"Created label: $l")
       case Failure(e) => logger.warn(s"Did not create label: $e")
     }
-
   }
 
   override def createGraphForSingleLoad(): Unit = open()
@@ -215,7 +215,7 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
         ))
       ))
     ))
-    val result = Await.result(future, 5.seconds)
+    val result = Await.result(future, 60.seconds)
     result.edgeWithScores.map(_.edge).iterator
   }
 
@@ -248,8 +248,9 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
       if (vertex != null) {
         val qp = S2QueryParam(
           labelName = labelName,
-          direction = "in",
-          limit = Int.MaxValue
+          direction = "out",
+          limit = Int.MaxValue,
+          rpcTimeout = 100000000
         )
 
         val future = s2.getEdges(S2Query(

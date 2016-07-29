@@ -3,7 +3,9 @@ package eu.socialsensor.insert;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -41,7 +43,7 @@ public abstract class InsertionBase<T> implements Insertion
 
     // to write intermediate times for SingleInsertion subclasses
     protected final File resultsPath;
-
+    protected final Map<String, T> vertices = new HashMap<>();
     protected InsertionBase(GraphDatabaseType type, File resultsPath)
     {
         this.type = type;
@@ -112,7 +114,7 @@ public abstract class InsertionBase<T> implements Insertion
                 contextRelate.stop();
             }
 
-            if (i % 1000 == 0)
+            if (i % 10000 == 0)
             {
                 insertionTimes.add((double) thousandWatch.elapsed(TimeUnit.MILLISECONDS));
                 thousandWatch.stop();

@@ -92,7 +92,7 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<TitanVertex>,
         storage.addProperty(GraphDatabaseConfiguration.STORAGE_BACKEND.getName(), type.getBackend());
         storage.addProperty(GraphDatabaseConfiguration.STORAGE_HOSTS.getName(), zookeeper);
         storage.addProperty(GraphDatabaseConfiguration.STORAGE_DIRECTORY.getName(), dbPath.getAbsolutePath());
-        storage.addProperty(GraphDatabaseConfiguration.STORAGE_BATCH.getName(), Boolean.toString(batchLoading));
+        storage.addProperty(GraphDatabaseConfiguration.STORAGE_BATCH.getName(), batchLoading);
         storage.addProperty(GraphDatabaseConfiguration.BUFFER_SIZE.getName(), bench.getTitanBufferSize());
         storage.addProperty(GraphDatabaseConfiguration.PAGE_SIZE.getName(), bench.getTitanPageSize());
 
@@ -160,6 +160,11 @@ public class TitanGraphDatabase extends GraphDatabaseBase<Iterator<TitanVertex>,
         }
         else if (GraphDatabaseType.TITAN_DYNAMODB == type)
         {
+        }
+        else if (GraphDatabaseType.TITAN_HBASE == type)
+        {
+            storage.setProperty("hostname", "aa-hadoop-rm3.dakao.io:2181,aa-hadoop-rm1.dakao.io:2181,aa-hadoop-nn2.dakao.io:2181,aa-hadoop-rm2.dakao.io:2181,aa-hadoop-nn1.dakao.io:2181");
+            storage.setProperty("hbase.region-count", 5);
         }
         return TitanFactory.open(conf);
     }
