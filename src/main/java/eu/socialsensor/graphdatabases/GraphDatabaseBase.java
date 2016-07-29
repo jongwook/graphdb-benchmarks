@@ -1,9 +1,7 @@
 package eu.socialsensor.graphdatabases;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
@@ -163,6 +161,12 @@ public abstract class GraphDatabaseBase<VertexIteratorType, EdgeIteratorType, Ve
                 }
 
                 total += dests.size();
+                if (i % 10000 == 0) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("vertex ").append(i).append(" : size = ").append(dests.size()).append(dests.size());
+                    System.err.println(sb.toString());
+                }
+
                 this.cleanupEdgeIterator(edgeNeighborIterator);
             }
 

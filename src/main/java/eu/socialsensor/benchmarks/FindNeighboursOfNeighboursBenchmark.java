@@ -33,6 +33,7 @@ public class FindNeighboursOfNeighboursBenchmark extends PermutingBenchmarkBase 
     {
         GraphDatabase<?, ?, ?, ?> graphDatabase = Utils.createDatabaseInstance(bench, type);
         graphDatabase.open();
+
         for (int i = 0; i < repetitions; i++) {
             Stopwatch watch = new Stopwatch();
             watch.start();

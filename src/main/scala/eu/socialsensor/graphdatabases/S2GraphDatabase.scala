@@ -266,7 +266,11 @@ class S2GraphDatabase(backend: GraphDatabaseType, config: Config, dbStorageDirec
         ))
         val result = Await.result(future, 10.seconds)
 
-        result.edgeWithScores.map(_.edge.tgtId).toSet.size
+        val size = result.edgeWithScores.map(_.edge.tgtId).toSet.size
+        if (src % 10000 == 0) {
+          System.err.println(s"vertex $src : size = $size")
+        }
+        size
       } else {
         0L
       }
