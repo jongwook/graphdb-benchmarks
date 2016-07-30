@@ -38,8 +38,10 @@ public class FindNeighboursOfNeighboursBenchmark extends PermutingBenchmarkBase 
             Stopwatch watch = new Stopwatch();
             watch.start();
             long total = graphDatabase.findAllNeighboursOfNeighboursOfTheFirstFewNodes(nodesCount);
-            System.err.println("type = " + type + "; total neighbours of neighbours = " + total);
-            times.get(type).add((double) watch.elapsed(TimeUnit.MILLISECONDS));
+            double elapsed = (double) watch.elapsed(TimeUnit.MILLISECONDS);
+            System.err.println("type = " + type + "; trial + " + i + ", total neighbours of neighbours = " + total + ", elapsed = " + elapsed);
+
+            times.get(type).add(elapsed);
         }
         graphDatabase.shutdown();
     }
